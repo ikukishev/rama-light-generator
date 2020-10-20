@@ -16,7 +16,59 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <widget class="QTableView" name="tableView"/>
+     <widget class="QTableWidget" name="tableWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="textElideMode">
+       <enum>Qt::ElideMiddle</enum>
+      </property>
+      <property name="showGrid">
+       <bool>false</bool>
+      </property>
+      <property name="gridStyle">
+       <enum>Qt::NoPen</enum>
+      </property>
+      <attribute name="horizontalHeaderVisible">
+       <bool>true</bool>
+      </attribute>
+      <attribute name="verticalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
+      <column>
+       <property name="text">
+        <string>label</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>button</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>checkbox</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>combo box</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>progress</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>volume</string>
+       </property>
+      </column>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -26,7 +78,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
