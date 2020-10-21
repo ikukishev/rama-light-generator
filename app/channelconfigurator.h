@@ -6,34 +6,11 @@
 #include <QAbstractButton>
 #include <QString>
 #include <vector>
+#include <CConfiguration.h>
 
 namespace Ui {
 class ChannelConfigurator;
 }
-
-class Channel
-{
-public:
-    Channel(const QString& alabel,
-        const uint32_t& aunit,
-        const uint32_t& achannel,
-        const uint32_t& avoltage,
-        const uint32_t& aspectrumIndex,
-        const double& amultipler)
-        : label( alabel )
-        , unit( aunit )
-        , channel( achannel )
-        , voltage( avoltage )
-        , spectrumIndex( aspectrumIndex )
-        , multipler( amultipler )
-    {}
-    QString label;
-    uint32_t unit;
-    uint32_t channel;
-    uint32_t voltage;
-    uint32_t spectrumIndex;
-    double multipler;
-};
 
 class ChannelConfigurator : public QDialog
 {

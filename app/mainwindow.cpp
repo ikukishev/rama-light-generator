@@ -9,6 +9,8 @@
 #include <QProgressBar>
 #include <QComboBox>
 #include <QSlider>
+#include <QFileDialog>
+#include <QStandardPaths>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -27,40 +29,53 @@ MainWindow::MainWindow(QWidget *parent)
        //processFinished();
     }
 
-    //m_channelConfigurator->display();
+    QHeaderView * header = ui->tableWidget->horizontalHeader();
+    header->setSectionResizeMode(1, QHeaderView::Stretch);
+    header->setSectionResizeMode(4, QHeaderView::Stretch);
+
     ui->tableWidget->setRowCount(2);
 
-    auto button = new QPushButton("start");
-    button->setIcon(QIcon(":/images/record.png"));
+    //auto button = new QPushButton("start");
+    //button->setIcon(QIcon(":/images/record.png"));
+    //button->setIcon(style()->standardIcon(QStyle::SP_MediaSeekForward));
 
-    auto checkBox = new QCheckBox();
-    auto progressBar = new QProgressBar();
-    progressBar->setMaximum(20);
-    progressBar->setMinimum(0);
-    progressBar->setValue(15);
-    auto comboBox = new QComboBox();
-    comboBox->addItem("110");
-    comboBox->addItem("220");
+    //auto checkBox = new QCheckBox();
+    //auto progressBar = new QProgressBar();
+    //progressBar->setMaximum(20);
+//    progressBar->setMinimum(0);
+//    progressBar->setValue(15);
+//    auto comboBox = new QComboBox();
+//    comboBox->addItem("110");
+//    comboBox->addItem("220");
 
     auto slider = new QSlider();
     slider->setMaximum(100);
     slider->setMinimum(0);
+    slider->setValue(50);
     slider->setOrientation(Qt::Horizontal);
+    slider->setDisabled(true);
 
 
 
-    ui->tableWidget->setCellWidget(0,0, new QLabel("Path to file"));
-    ui->tableWidget->setCellWidget(0,1, button);
-    ui->tableWidget->setCellWidget(0,2, checkBox);
-    ui->tableWidget->setCellWidget(0,3, progressBar);
-    ui->tableWidget->setCellWidget(0,4, comboBox);
-    ui->tableWidget->setCellWidget(0,5, slider);
+//    ui->tableWidget->setCellWidget(0,0, new QLabel("Path to file"));
+//    ui->tableWidget->setCellWidget(0,1, button);
+//    ui->tableWidget->setCellWidget(0,2, checkBox);
+//    ui->tableWidget->setCellWidget(0,3, progressBar);
+//    ui->tableWidget->setCellWidget(0,4, comboBox);
+      ui->tableWidget->setCellWidget(0,4, slider);
+
+
 
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+   delete ui;
+}
+
+const std::vector<Channel> &MainWindow::channels() const
+{
+   return m_channelConfigurator->channels();
 }
 
 void MainWindow::processFinished()
@@ -73,15 +88,66 @@ void MainWindow::processFinished()
    }
 }
 
-
-void MainWindow::on_pushButton_clicked()
+void MainWindow::on_actionExit_triggered()
 {
-   if (m_audio_file)
-      m_audio_file->stop();
+   qDebug() << __FUNCTION__;
+   persist();
+   QApplication::exit();
 }
 
-void MainWindow::on_pushButton_2_clicked()
+void MainWindow::persist()
 {
-   if (m_audio_file)
-      m_audio_file->play();
+
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+   qDebug() << __FUNCTION__;
+   persist();
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+   QFileDialog fileDialog(this);
+   fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
+   fileDialog.setFileMode(QFileDialog::ExistingFiles);
+   fileDialog.setWindowTitle(tr("Open Files"));
+   fileDialog.setNameFilters({{"*.mp3"},{"*.wav"}});
+   fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath()));
+   if (fileDialog.exec() == QDialog::Accepted)
+   {
+      for (auto file : fileDialog.selectedFiles()) {
+         qDebug() << file;
+      }
+   }
+       //addToPlaylist(fileDialog.selectedUrls());
+}
+
+void MainWindow::on_actionSet_destination_folder_triggered()
+{
+   QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                               "/home",
+                                               QFileDialog::ShowDirsOnly
+                                               | QFileDialog::DontResolveSymlinks);
+   if ( !dir.isEmpty() && dir != destinationFolder )
+      destinationFolder = dir;
+}
+
+void MainWindow::on_actionSave_sequenses_configuration_triggered()
+{
+   qDebug() << __FUNCTION__;
+   persist();
+}
+
+void MainWindow::on_actionChannel_configuration_triggered()
+{
+   if ( QDialog::Accepted == m_channelConfigurator->display() )
+   {
+      channelConfigurationChanged();
+   }
+}
+
+void MainWindow::channelConfigurationChanged()
+{
+   qDebug() << __FUNCTION__;
 }

@@ -44,6 +44,9 @@ public:
 
     void resetFFTData();
 
+    float getVolume() const;
+    void setVolume(const float vol ) const;
+
 Q_SIGNALS:
     void processFinished();
     void positionChanged(const SpectrumData& spectrum);
