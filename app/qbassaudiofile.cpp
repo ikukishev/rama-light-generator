@@ -147,3 +147,33 @@ void QBassAudioFile::resetFFTData()
     m_spectrumData.clear();
     setPosition(0);
 }
+
+float QBassAudioFile::getVolume() const
+{
+   float volume = 0.0f;
+   BASS_ChannelGetAttribute( m_stream, BASS_ATTRIB_VOL, &volume);
+   if (volume < 0.0f)
+   {
+      volume = 0.0f;
+   }
+   else if ( volume > 1.0f)
+   {
+      volume = 1.0f;
+   }
+
+   return volume;
+}
+
+void QBassAudioFile::setVolume(const float vol) const
+{
+   float volume = vol;
+   if (volume < 0.0f)
+   {
+      volume = 0.0f;
+   }
+   else if ( volume > 1.0f)
+   {
+      volume = 1.0f;
+   }
+   BASS_ChannelSetAttribute( m_stream, BASS_ATTRIB_VOL, volume);
+}

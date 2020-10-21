@@ -7,15 +7,18 @@ TARGET = spectrum
 QT       += multimedia widgets
 
 SOURCES  += channelconfigurator.cpp \
-            fft-base/qbassaudiofile.cpp \
-            fft-base/spectrograph.cpp \
+            clightsequence.cpp \
             main.cpp \
-            mainwindow.cpp
+            mainwindow.cpp \
+            qbassaudiofile.cpp \
+            spectrograph.cpp
 
 HEADERS  += channelconfigurator.h \
-            fft-base/qbassaudiofile.h \
-            fft-base/spectrograph.h \
-            mainwindow.h
+            CConfiguration.h \
+            clightsequence.h \
+            mainwindow.h \
+            qbassaudiofile.h \
+            spectrograph.h
 
 fftreal_dir = ../3rdparty/fftreal
 
@@ -26,7 +29,7 @@ RESOURCES = fft-base/spectrum.qrc
 
 LIBS += -L..$${spectrum_build_dir}
 LIBS += -L$$PWD/../3rdparty/bass24-linux/x64
-LIBS += -lfftreal -lbass
+LIBS += -lbass
 
 target.path = $$[QT_INSTALL_EXAMPLES]/multimedia/spectrum
 INSTALLS += target
