@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "qbassaudiofile.h"
 #include "spectrograph.h"
 #include "channelconfigurator.h"
 #include "CConfiguration.h"

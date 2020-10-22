@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     {
        connect(m_audio_file.get(), SIGNAL(processFinished()), this, SLOT(processFinished()));
        connect(m_audio_file.get(), SIGNAL(positionChanged(const SpectrumData&)), m_spectrograph, SLOT(spectrumChanged( const SpectrumData&)));
-       //processFinished();
+       processFinished();
     }
 
     QHeaderView * header = ui->tableWidget->horizontalHeader();

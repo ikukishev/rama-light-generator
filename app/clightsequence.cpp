@@ -1,6 +1,9 @@
 #include "clightsequence.h"
 
-CLightSequence::CLightSequence(QObject *parent) : QObject(parent)
+CLightSequence::CLightSequence(const std::string &fileName, const CConfigation &configuration)
+    : QObject(nullptr)
+    , m_configuration(configuration)
+    , m_audioFile( QBassAudioFile::get(fileName) )
 {
 
 }
