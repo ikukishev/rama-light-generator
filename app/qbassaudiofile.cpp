@@ -10,6 +10,7 @@ QBassAudioFile::QBassAudioFile()
     , m_spectrumData()
     , m_timer( new QTimer(this) )
     , m_stream( 0 )
+    , m_state( EState::Stop )
 {
     connect( m_timer, &QTimer::timeout, [this]() {
         if ( 0 != m_stream )
@@ -27,6 +28,24 @@ QBassAudioFile::QBassAudioFile()
             }
         }
     });
+}
+
+QBassAudioFile::~QBassAudioFile()
+{
+   qDebug() << __FUNCTION__ << m_fileName.c_str();
+   stop();
+
+   if ( m_timer != nullptr )
+   {
+      delete m_timer;
+      m_timer = nullptr;
+   }
+
+   if ( 0 != m_stream )
+   {
+      BASS_StreamFree(m_stream);
+      m_stream = 0;
+   }
 }
 
 std::shared_ptr<QBassAudioFile> QBassAudioFile::get( const std::string& fileName )
@@ -54,25 +73,55 @@ void QBassAudioFile::play()
 {
     if ( 0 != m_stream )
     {
-        if ( !BASS_ChannelPlay( m_stream, false ) )
-        {
-            qDebug() << "BASS_ChannelPlay unsuccess" ;
-        }
-        m_timer->start(30);
+       if ( EState::Stop == m_state )
+       {
+          if ( !BASS_ChannelPlay( m_stream, false ) )
+          {
+              qDebug() << "BASS_ChannelPlay unsuccess" ;
+          }
+          else
+          {
+             m_state = EState::Play;
+             m_timer->start(30);
+          }
+       }
+       else
+       {
+          qDebug() << "BASS_ChannelPlay unsuccess => already playing" ;
+       }
+
     }
     else
     {
-        qDebug() << "BASS_ChannelPlay unsuccess" ;
+        qDebug() << "BASS_ChannelPlay unsuccess 0 == m_stream" ;
     }
 }
 
 void QBassAudioFile::stop()
 {
-    if ( 0 != m_stream )
-    {
-        BASS_ChannelStop( m_stream );
-    }
-    m_timer->stop();
+   if ( EState::Play == m_state )
+   {
+      if ( 0 != m_stream )
+      {
+         if ( BASS_ChannelStop( m_stream ) )
+         {
+            m_state = EState::Stop;
+            m_timer->stop();
+         }
+         else
+         {
+            qDebug() << "BASS_ChannelStop unsuccess" ;
+         }
+      }
+      else
+      {
+         qDebug() << "BASS_ChannelStop unsuccess 0 == m_stream" ;
+      }
+   }
+   else
+   {
+      qDebug() << "BASS_ChannelStop already stoped" ;
+   }
 }
 
 void QBassAudioFile::setPosition(uint64_t position)

@@ -2,70 +2,21 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <QUrl>
-#include <QPushButton>
-#include <QLabel>
-#include <QIcon>
-#include <QCheckBox>
-#include <QProgressBar>
-#include <QComboBox>
-#include <QSlider>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <algorithm>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_audio_file( nullptr )
     , m_spectrograph( new Spectrograph( ))
     , m_channelConfigurator( new ChannelConfigurator( this ))
 {
     ui->setupUi(this);
 
-    m_audio_file = QBassAudioFile::get( "/home/ivan/Downloads/PlanetshakersOverflow.mp3" );
-    if ( m_audio_file )
-    {
-       connect(m_audio_file.get(), SIGNAL(processFinished()), this, SLOT(processFinished()));
-       connect(m_audio_file.get(), SIGNAL(positionChanged(const SpectrumData&)), m_spectrograph, SLOT(spectrumChanged( const SpectrumData&)));
-       processFinished();
-    }
-
     QHeaderView * header = ui->tableWidget->horizontalHeader();
     header->setSectionResizeMode(1, QHeaderView::Stretch);
     header->setSectionResizeMode(4, QHeaderView::Stretch);
-
-    ui->tableWidget->setRowCount(2);
-
-    //auto button = new QPushButton("start");
-    //button->setIcon(QIcon(":/images/record.png"));
-    //button->setIcon(style()->standardIcon(QStyle::SP_MediaSeekForward));
-
-    //auto checkBox = new QCheckBox();
-    //auto progressBar = new QProgressBar();
-    //progressBar->setMaximum(20);
-//    progressBar->setMinimum(0);
-//    progressBar->setValue(15);
-//    auto comboBox = new QComboBox();
-//    comboBox->addItem("110");
-//    comboBox->addItem("220");
-
-    auto slider = new QSlider();
-    slider->setMaximum(100);
-    slider->setMinimum(0);
-    slider->setValue(50);
-    slider->setOrientation(Qt::Horizontal);
-    slider->setDisabled(true);
-
-
-
-//    ui->tableWidget->setCellWidget(0,0, new QLabel("Path to file"));
-//    ui->tableWidget->setCellWidget(0,1, button);
-//    ui->tableWidget->setCellWidget(0,2, checkBox);
-//    ui->tableWidget->setCellWidget(0,3, progressBar);
-//    ui->tableWidget->setCellWidget(0,4, comboBox);
-      ui->tableWidget->setCellWidget(0,4, slider);
-
-
-
 }
 
 MainWindow::~MainWindow()
@@ -78,15 +29,6 @@ const std::vector<Channel> &MainWindow::channels() const
    return m_channelConfigurator->channels();
 }
 
-void MainWindow::processFinished()
-{
-    //m_spectrograph->setParams(m_audio_file.getSpectrum()[0]->spectrum.count(), SpectrumLowFreq, SpectrumHighFreq*4);
-   if (m_audio_file)
-   {
-      m_audio_file->play();
-      m_spectrograph->show();
-   }
-}
 
 void MainWindow::on_actionExit_triggered()
 {
@@ -98,6 +40,20 @@ void MainWindow::on_actionExit_triggered()
 void MainWindow::persist()
 {
 
+}
+
+void MainWindow::updateTable()
+{
+    ui->tableWidget->setRowCount(m_sequences.size());
+    for ( std::size_t i = 0; i < m_sequences.size(); ++i )
+    {
+       auto& widgets = m_sequences[i]->getControlWidgets();
+       for ( std::size_t j = 0; j < widgets.size(); ++j )
+       {
+           ui->tableWidget->setCellWidget( i, j, widgets[j] );
+       }
+    }
+    qDebug() << __FUNCTION__ << "m_sequences.size() =" << m_sequences.size() << "done";
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -116,11 +72,32 @@ void MainWindow::on_actionOpen_triggered()
    fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::MusicLocation).value(0, QDir::homePath()));
    if (fileDialog.exec() == QDialog::Accepted)
    {
-      for (auto file : fileDialog.selectedFiles()) {
-         qDebug() << file;
+      if ( fileDialog.selectedFiles().count() > 0 )
+      {
+         for (auto file : fileDialog.selectedFiles())
+         {
+            qDebug() << file;
+            auto sq = std::make_shared<CLightSequence>( file.toStdString(), *this );
+
+            connect( sq.get(), &CLightSequence::deleteTriggered, [this](CLightSequence* thisObject){
+               std::size_t i = 0;
+               auto it = m_sequences.begin();
+               for ( ; i < m_sequences.size(); ++i, ++it)
+               {
+                  if ( m_sequences[i].get() == thisObject )
+                  {
+                     m_sequences.erase( it );
+                     ui->tableWidget->removeRow( i );
+                     break;
+                  }
+               }
+            });
+
+            m_sequences.emplace_back( sq );
+         }
+         updateTable();
       }
    }
-       //addToPlaylist(fileDialog.selectedUrls());
 }
 
 void MainWindow::on_actionSet_destination_folder_triggered()

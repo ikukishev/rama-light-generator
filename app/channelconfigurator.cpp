@@ -459,10 +459,10 @@ void ChannelConfigurator::on_tableWidget_customContextMenuRequested( const QPoin
     delAct->setShortcuts(QKeySequence::Delete);
     delAct->setStatusTip(tr("Delete row"));
 
-    connect( delAct, &QAction::triggered, [this](){
+    connect( delAct, &QAction::triggered, [ this ]() {
 
         if ( ui->tableWidget->rowCount() > 0
-             && ui->tableWidget->currentRow()>=0
+             && ui->tableWidget->currentRow() >= 0
              && ui->tableWidget->currentRow() < ui->tableWidget->rowCount() )
         {
             qDebug() << "Delete";

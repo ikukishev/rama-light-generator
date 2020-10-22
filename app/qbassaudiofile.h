@@ -28,6 +28,10 @@ private:
 
 public:
 
+    enum class EState { Play, Stop };
+
+    ~QBassAudioFile();
+
     static std::shared_ptr<QBassAudioFile> get( const std::string& fileName );
 
     void play();
@@ -47,6 +51,8 @@ public:
     float getVolume() const;
     void setVolume(const float vol ) const;
 
+    const EState& state() const { return m_state; }
+
 Q_SIGNALS:
     void processFinished();
     void positionChanged(const SpectrumData& spectrum);
@@ -56,6 +62,7 @@ private:
     std::vector< std::shared_ptr<SpectrumData> > m_spectrumData;
     QTimer * m_timer;
     HSTREAM m_stream;
+    EState m_state;
 
 };
 

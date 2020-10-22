@@ -5,6 +5,7 @@
 #include "spectrograph.h"
 #include "channelconfigurator.h"
 #include "CConfiguration.h"
+#include "clightsequence.h"
 
 namespace Ui {
 class MainWindow;
@@ -22,7 +23,6 @@ public:
    virtual const std::vector<Channel> &channels() const override;
 
 public slots:
-    void processFinished();
 
 private slots:
 
@@ -42,15 +42,17 @@ private:
 
     void persist();
 
+    void updateTable();
+
 protected:
 
     virtual void closeEvent(QCloseEvent *event) override;
 
 private:
     Ui::MainWindow *ui;
-    std::shared_ptr<QBassAudioFile> m_audio_file;
     Spectrograph*                   m_spectrograph;
     ChannelConfigurator*            m_channelConfigurator;
+    std::vector<std::shared_ptr<CLightSequence>> m_sequences;
 
 };
 
