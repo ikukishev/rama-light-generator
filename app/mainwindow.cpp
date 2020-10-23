@@ -5,6 +5,16 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <algorithm>
+#include <QMessageBox>
+#include <QJsonArray>
+#include <QJsonDocument>
+
+
+const QString cSequenseConfigurationFileName( "sequenseConfiguration.json" );
+
+const QString cKeyOutputDirectory( "outputDir" );
+const QString cKeySequenses( "sequenses" );
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow( parent )
@@ -16,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     QHeaderView * header = ui->tableWidget->horizontalHeader();
     header->setSectionResizeMode(1, QHeaderView::Stretch);
     header->setSectionResizeMode(4, QHeaderView::Stretch);
+    load();
 }
 
 MainWindow::~MainWindow()
@@ -38,7 +49,88 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::persist()
 {
+    qDebug() << "MainWindow::persist()";
+    QFile persistFile( cSequenseConfigurationFileName );
+    if ( !persistFile.open( QIODevice::WriteOnly ) )
+    {
+        QMessageBox::warning( this, "Warning", QString("Couldn't write configuration to file: ") + cSequenseConfigurationFileName );
+        return ;
+    }
 
+    QJsonArray sequenseArray;
+
+    for ( const auto& seq : m_sequences )
+    {
+        sequenseArray.append(seq->serialize());
+    }
+
+    QJsonObject config;
+    config[ cKeyOutputDirectory ] = destinationFolder;
+    config[ cKeySequenses ] = sequenseArray;
+
+    persistFile.write( QJsonDocument(config).toJson() );
+
+}
+
+void MainWindow::load()
+{
+    QFile persistFile( cSequenseConfigurationFileName );
+    if ( persistFile.exists() )
+    {
+        if (!persistFile.open(QIODevice::ReadOnly))
+        {
+            QMessageBox::warning( this, "Warning", QString("Couldn't open sequense configuration file: ") + cSequenseConfigurationFileName );
+            return ;
+        }
+
+        QByteArray saveData = persistFile.readAll();
+        persistFile.close();
+
+        QJsonDocument loadDoc( QJsonDocument::fromJson(saveData) );
+        const QJsonObject &json = loadDoc.object();
+
+        if ( json.contains( cKeyOutputDirectory ) )
+        {
+            if ( !json[ cKeyOutputDirectory ].isString() )
+            {
+                qWarning() << "Output directory is not a string: " << cKeyOutputDirectory ;
+            }
+            else
+            {
+                destinationFolder = json[ cKeyOutputDirectory ].toString();
+            }
+        }
+
+        if (json.contains( cKeySequenses ))
+        {
+            QJsonArray seqJson( json[ cKeySequenses ].toArray() );
+            m_sequences.reserve(seqJson.size());
+            qDebug() << "Json sequenses count: " << seqJson.size();
+
+            for ( const auto& seq : seqJson )
+            {
+                if ( seq.isObject() )
+                {
+                    std::shared_ptr<CLightSequence> seqPtr = CLightSequence::fromJson( seq.toObject(), *this );
+                    if ( seqPtr )
+                    {
+                        connect( seqPtr.get(), &CLightSequence::deleteTriggered, this, &MainWindow::sequenseDeleted);
+                        m_sequences.push_back(seqPtr);
+                    }
+                }
+                else
+                {
+                    qWarning() << "sequense is a JSON object";
+                }
+            }
+
+            qDebug() << "sequences count: " << m_sequences.size();
+
+            channelConfigurationChanged();
+            updateTable();
+        }
+
+    }
 }
 
 void MainWindow::updateTable()
@@ -53,6 +145,21 @@ void MainWindow::updateTable()
        }
     }
     qDebug() << __FUNCTION__ << "m_sequences.size() =" << m_sequences.size() << "done";
+}
+
+void MainWindow::sequenseDeleted(CLightSequence *thisObject)
+{
+    std::size_t i = 0;
+    auto it = m_sequences.begin();
+    for ( ; i < m_sequences.size(); ++i, ++it)
+    {
+       if ( m_sequences[i].get() == thisObject )
+       {
+          m_sequences.erase( it );
+          ui->tableWidget->removeRow( i );
+          break;
+       }
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -78,22 +185,11 @@ void MainWindow::on_actionOpen_triggered()
             qDebug() << file;
             auto sq = std::make_shared<CLightSequence>( file.toStdString(), *this );
 
-            connect( sq.get(), &CLightSequence::deleteTriggered, [this](CLightSequence* thisObject){
-               std::size_t i = 0;
-               auto it = m_sequences.begin();
-               for ( ; i < m_sequences.size(); ++i, ++it)
-               {
-                  if ( m_sequences[i].get() == thisObject )
-                  {
-                     m_sequences.erase( it );
-                     ui->tableWidget->removeRow( i );
-                     break;
-                  }
-               }
-            });
+            connect( sq.get(), &CLightSequence::deleteTriggered, this, &MainWindow::sequenseDeleted);
 
             m_sequences.emplace_back( sq );
          }
+         channelConfigurationChanged();
          updateTable();
       }
    }
@@ -102,7 +198,7 @@ void MainWindow::on_actionOpen_triggered()
 void MainWindow::on_actionSet_destination_folder_triggered()
 {
    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
-                                               "/home",
+                                               destinationFolder,
                                                QFileDialog::ShowDirsOnly
                                                | QFileDialog::DontResolveSymlinks);
    if ( !dir.isEmpty() && dir != destinationFolder )

@@ -8,36 +8,51 @@
 #include <QSlider>
 #include <QFileInfo>
 #include <QDebug>
+#include <QJsonArray>
+
+const QString cKeyFileName("file");
+const QString cKeyChannelConfiguration("configuration");
+const QString cKeyChannelUUID("uuid");
+const QString cKeyChannelSpectrumIndex("spectrumIndex");
+const QString cKeyChannelMultipler("multipler");
 
 CLightSequence::CLightSequence(const std::string &fileName, const CConfigation &configuration)
-    : QObject(nullptr)
-    , m_configuration(configuration)
-    , m_fileName(fileName)
+    : QObject( nullptr )
+    , m_configuration( configuration )
+    , m_fileName( fileName )
     , m_audioFile( nullptr )
     , m_isGenerateStarted( false )
 {
-   adjust();
+    adjust();
 }
+
 
 CLightSequence::~CLightSequence()
 {
-   destroy();
+    destroy();
+}
+
+CLightSequence::CLightSequence(const std::string &fileName,
+                               const CConfigation &configuration,
+                               std::list<std::shared_ptr<CLightSequence::SequenceChannelConfigation> > &&channelConfiguration)
+    : QObject( nullptr )
+    , m_configuration( configuration )
+    , m_fileName( fileName )
+    , m_audioFile( nullptr )
+    , m_channelConfiguration( std::move( channelConfiguration ) )
+    , m_isGenerateStarted( false )
+{
+    adjust();
 }
 
 void CLightSequence::adjust()
 {
-   if ( nullptr != m_audioFile )
-   {
-      destroy();
-   }
-
    m_audioFile = QBassAudioFile::get(m_fileName);
    if ( nullptr == m_audioFile )
    {
       qDebug() << "Was not able to create audio file";
       return;
    }
-
 
    //*************************************************************
 
@@ -189,21 +204,15 @@ void CLightSequence::destroy()
       m_audioFile = nullptr;
    }
 
-   for ( auto widget : m_controlWidgets )
-   {
-      if ( nullptr != widget )
-      {
-         delete widget;
-      }
-   }
    m_controlWidgets.clear();
    qDebug() << __FUNCTION__ << m_fileName.c_str();
 }
 
 void CLightSequence::generateSequense()
 {
-   qDebug() << __FUNCTION__;
+    qDebug() << __FUNCTION__;
 }
+
 
 void CLightSequence::channelConfigurationUpdated()
 {
@@ -232,7 +241,20 @@ void CLightSequence::channelConfigurationUpdated()
 
 QJsonObject CLightSequence::serialize() const
 {
-   return QJsonObject();
+    QJsonObject jo;
+
+    jo[ cKeyFileName ] = QString(m_fileName.c_str());
+
+    QJsonArray configuration;
+
+    for ( const auto& cc : m_channelConfiguration )
+    {
+        configuration.push_back( cc->serialize() );
+    }
+
+    jo[ cKeyChannelConfiguration ] = configuration;
+
+    return jo;
 }
 
 std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::getConfiguration(const QUuid &uuid)
@@ -249,4 +271,124 @@ std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::getC
    }
 
    return cc;
+}
+
+std::shared_ptr<CLightSequence> CLightSequence::fromJson(const QJsonObject &jo, const CConfigation& configuration)
+{
+    std::shared_ptr<CLightSequence> ls;
+    if ( jo.contains( cKeyFileName ) )
+    {
+        if ( !jo[ cKeyFileName ].isString() )
+        {
+            qWarning() << "filename of sequense is not a string";
+        }
+        else
+        {
+            QString fileName( jo[ cKeyFileName ].toString() );
+
+            if ( QFile::exists( fileName ) )
+            {
+                std::list<std::shared_ptr<SequenceChannelConfigation>> channelConfiguration;
+                if ( jo.contains( cKeyChannelConfiguration ) )
+                {
+                    for ( const auto& ccJo : jo[ cKeyChannelConfiguration ].toArray() )
+                    {
+                        if ( ccJo.isObject() )
+                        {
+                            auto ccPtr = SequenceChannelConfigation::fromJson( ccJo.toObject() );
+                            if ( ccPtr )
+                            {
+                                channelConfiguration.push_back( ccPtr );
+                            }
+                        }
+                    }
+                }
+
+                ls = std::make_shared<CLightSequence>( fileName.toStdString(), configuration, std::move( channelConfiguration ) );
+            }
+            else
+            {
+                qWarning() << "file is not exist";
+            }
+        }
+    }
+
+    return ls;
+}
+
+void CLightSequence::SequenceChannelConfigation::setSpectrumIndex(const uint32_t index)
+{
+    if ( isSpectrumIndexSet() )
+    {
+        ( *spectrumIndex ) = index;
+    }
+    else
+    {
+        spectrumIndex = std::make_shared< uint32_t >( index );
+    }
+}
+
+void CLightSequence::SequenceChannelConfigation::setMultipler(const double mul)
+{
+    if ( isMultiplerSet() )
+    {
+        ( *multipler ) = mul;
+    }
+    else
+    {
+        multipler = std::make_shared< double >( mul );
+    }
+}
+
+QJsonObject CLightSequence::SequenceChannelConfigation::serialize() const
+{
+    QJsonObject jo;
+    jo[ cKeyChannelUUID ] = channelUuid.toString();
+    if ( spectrumIndex ) jo[ cKeyChannelSpectrumIndex ] = static_cast<int>(*spectrumIndex);
+    if ( multipler ) jo[ cKeyChannelMultipler ] = static_cast<double>(*multipler);
+    return jo;
+}
+
+std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::SequenceChannelConfigation::fromJson(const QJsonObject &jo)
+{
+    std::shared_ptr<SequenceChannelConfigation> cc;
+    if ( jo.contains( cKeyChannelUUID ) )
+    {
+        if ( !jo[ cKeyChannelUUID ].isString() )
+        {
+            qWarning() << "Channel uuid not presentd";
+        }
+        else
+        {
+            QUuid uuid( jo[ cKeyChannelUUID ].toString() );
+            if ( !uuid.isNull())
+            {
+                cc = std::make_shared<SequenceChannelConfigation>( uuid );
+                if ( jo.contains( cKeyChannelSpectrumIndex ) )
+                {
+                    int index = jo[ cKeyChannelSpectrumIndex ].toInt(-1);
+                    if ( -1 != index )
+                    {
+                        cc->setSpectrumIndex(index);
+                    }
+                }
+
+                if ( jo.contains( cKeyChannelMultipler ) )
+                {
+                    double m = jo[ cKeyChannelMultipler ].toDouble(-1.0);
+                    if ( -1.0 != m )
+                    {
+                        cc->setMultipler(m);
+                    }
+                }
+
+            }
+            else
+            {
+                qWarning() << "Channel uuid is wrong";
+            }
+        }
+    }
+
+    return cc;
 }

@@ -17,6 +17,7 @@ public:
 
    class SequenceChannelConfigation
    {
+       friend  class CLightSequence;
    public:
       SequenceChannelConfigation( const QUuid& achannelUuid ) : channelUuid( achannelUuid )
       {}
@@ -40,6 +41,12 @@ public:
       bool isMultiplerSet() const { return nullptr != multipler; }
       bool isSameChannel( const QUuid& auuid ) const { return auuid == channelUuid; }
 
+      void setSpectrumIndex( const uint32_t index );
+      void setMultipler(const double mul );
+
+      QJsonObject serialize() const;
+
+      static std::shared_ptr<SequenceChannelConfigation> fromJson( const QJsonObject& jo );
 
    public:
       QUuid channelUuid;
@@ -48,6 +55,7 @@ public:
    };
 
    explicit CLightSequence(const std::string& fileName, const CConfigation& configuration );
+   explicit CLightSequence(const std::string& fileName, const CConfigation& configuration, std::list<std::shared_ptr<SequenceChannelConfigation>>&& channelConfiguration );
    ~CLightSequence();
 
    const std::vector<QWidget*>& getControlWidgets() const { return m_controlWidgets; }
@@ -57,9 +65,11 @@ signals:
    void deleteTriggered(CLightSequence* thisObject);
 
 private:
+
    void adjust();
    void destroy();
    void generateSequense();
+
 
 public:
    void channelConfigurationUpdated();
@@ -68,6 +78,7 @@ public:
 
    std::shared_ptr<SequenceChannelConfigation> getConfiguration( const QUuid& uuid );
 
+   static std::shared_ptr<CLightSequence> fromJson( const QJsonObject& jo, const CConfigation& configuration );
 
 private:
     const CConfigation& m_configuration;
@@ -79,3 +90,4 @@ private:
 
     bool m_isGenerateStarted;
 };
+

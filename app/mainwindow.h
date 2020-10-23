@@ -42,7 +42,11 @@ private:
 
     void persist();
 
+    void load();
+
     void updateTable();
+
+    void sequenseDeleted(CLightSequence* thisObject);
 
 protected:
 
