@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>908</width>
+    <width>1293</width>
     <height>431</height>
    </rect>
   </property>
@@ -18,6 +18,9 @@
     <widget class="QTableWidget" name="tableWidget">
      <property name="contextMenuPolicy">
       <enum>Qt::CustomContextMenu</enum>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::NoSelection</enum>
      </property>
      <attribute name="horizontalHeaderDefaultSectionSize">
       <number>120</number>
@@ -50,6 +53,16 @@
      <column>
       <property name="text">
        <string>Multipler</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Color</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>UUID</string>
       </property>
      </column>
     </widget>

@@ -5,6 +5,7 @@
 #include <QTableWidgetItem>
 #include <QAbstractButton>
 #include <QString>
+#include <QLabel>
 #include <vector>
 #include <CConfiguration.h>
 
@@ -31,11 +32,14 @@ private slots:
     void updateChannelsValue();
     void setEnableOkButton(bool isEnabled);
 
+    QPushButton *prepareColorButton( const QColor& defaultColor );
+    QLabel *prepareUUIDLabel(const QUuid& uuid );
+
     bool isTableDataValid() const;
 
     void on_tableWidget_customContextMenuRequested(const QPoint &pos);
 
-    void on_tableWidget_itemChanged(QTableWidgetItem *item);
+    void on_tableWidget_itemChanged(QTableWidgetItem *);
 
     void on_buttonBox_clicked(QAbstractButton *button);
 

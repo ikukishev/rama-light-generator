@@ -8,6 +8,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QMenu>
+#include <QColorDialog>
+#include <QPushButton>
 
 const std::string configuration("channelConfiguration.json");
 
@@ -19,6 +21,8 @@ const QString &cKeyChannel( "Channel" );
 const QString &cKeyVoltage( "Voltage" );
 const QString &cKeySpectrumBarIndex( "SpectrumBarIndex" );
 const QString &cKeyMultipler( "Multipler" );
+const QString &cKeyColor( "Color" );
+const QString &cKeyUUID( "uuid" );
 
 
 
@@ -28,6 +32,9 @@ ChannelConfigurator::ChannelConfigurator(QWidget *parent)
 {
    ui->setupUi(this);
     connect(ui->tableWidget, &QTableWidget::customContextMenuRequested, this, &ChannelConfigurator::on_tableWidget_customContextMenuRequested);
+    QHeaderView * header = ui->tableWidget->horizontalHeader();
+    header->setSectionResizeMode(0, QHeaderView::Stretch);
+    header->setSectionResizeMode(7, QHeaderView::Stretch);
    load();
 }
 
@@ -42,6 +49,8 @@ QDialog::DialogCode ChannelConfigurator::display()
     if ( ui->tableWidget->rowCount() == 0)
     {
         ui->tableWidget->setRowCount(1);
+        ui->tableWidget->setCellWidget(0, 6, prepareColorButton( QColorConstants::Red ));
+        ui->tableWidget->setCellWidget(0, 7, prepareUUIDLabel( QUuid::createUuid() ));
     }
     setEnableOkButton(isTableDataValid());
     return static_cast< QDialog::DialogCode >( exec() );
@@ -141,7 +150,7 @@ void ChannelConfigurator::load()
                     {
                         if ( !jsonChannel[ cKeyMultipler ].isDouble() )
                         {
-                            isSchemaValid = false;
+                            Multipler = 1.0;
                             qWarning() << "Channel Multipler '" << cKeyMultipler << "' is wrong";
                         }
                         else
@@ -150,7 +159,35 @@ void ChannelConfigurator::load()
                         }
                     }
 
-                    channelsTmp.emplace_back(label, unit, ChannelNumber, Voltage, SpectrumBarIndex, Multipler);
+                    QString color;
+                    if ( jsonChannel.contains( cKeyColor ) )
+                    {
+                        if ( !jsonChannel[ cKeyColor ].isString() )
+                        {
+                            isSchemaValid = false;
+                            qWarning() << "Channel '" << cKeyColor << "' is wrong";
+                        }
+                        else
+                        {
+                            color = jsonChannel[ cKeyColor ].toString();
+                        }
+                    }
+
+                    QUuid uuid;
+                    if ( jsonChannel.contains( cKeyUUID ) )
+                    {
+                        if ( !jsonChannel[ cKeyUUID ].isString() )
+                        {
+                            uuid = QUuid::createUuid();
+                            qWarning() << "Channel '" << cKeyUUID << "' is wrong, new generated"<< uuid;
+                        }
+                        else
+                        {
+                            uuid = jsonChannel[ cKeyUUID ].toString();
+                        }
+                    }
+
+                    channelsTmp.emplace_back(label, unit, ChannelNumber, Voltage, SpectrumBarIndex, Multipler, color, uuid);
 
                 }
                 else
@@ -199,6 +236,8 @@ void ChannelConfigurator::persist()
         jsonObject[ cKeyVoltage ] = static_cast<int>(channel.voltage);
         jsonObject[ cKeySpectrumBarIndex ] = static_cast<int>(channel.spectrumIndex);
         jsonObject[ cKeyMultipler ] = channel.multipler;
+        jsonObject[ cKeyColor ] = channel.color;
+        jsonObject[ cKeyUUID ] = channel.uuid.toString();
         jsonChannelsArray.append(jsonObject);
     }
 
@@ -231,6 +270,9 @@ void ChannelConfigurator::updateTableData()
 
         qDebug() << "rowIndex:" << rowIndex << "Multipler:" << m_channels[rowIndex].multipler;
         ui->tableWidget->setItem(rowIndex, 5, new QTableWidgetItem( QString::number(m_channels[rowIndex].multipler)) );
+
+        ui->tableWidget->setCellWidget( rowIndex, 6, prepareColorButton( m_channels[rowIndex].color ) );
+        ui->tableWidget->setCellWidget( rowIndex, 7, prepareUUIDLabel( m_channels[rowIndex].uuid ) );
 
     }
 }
@@ -348,13 +390,21 @@ void ChannelConfigurator::updateChannelsValue()
             continue;
         }
 
-        channelsTmp.emplace_back( label, unit, ChannelNumber, Voltage, SpectrumBarIndex, Multipler );
+        QPushButton* buttonPtr = (QPushButton*)ui->tableWidget->cellWidget(rowIndex, 6);
+        auto color = buttonPtr->text();
+
+        QLabel* labelPtr = (QLabel*)ui->tableWidget->cellWidget(rowIndex, 7);
+        auto uuid = labelPtr->text();
+
+        channelsTmp.emplace_back( label, unit, ChannelNumber, Voltage, SpectrumBarIndex, Multipler, color, uuid );
         qDebug() << "label" << label
                  << "unit"<< unit
                  << "ChannelNumber" << ChannelNumber
                  << "Voltage" << Voltage
                  << "SpectrumBarIndex" << SpectrumBarIndex
-                 << "Multipler" << Multipler;
+                 << "Multipler" << Multipler
+                 << "Color" << color
+                 << "Uuid" << uuid;
     }
 
     m_channels = std::move(channelsTmp);
@@ -374,6 +424,32 @@ void ChannelConfigurator::setEnableOkButton(bool isEnabled)
     }
 }
 
+QPushButton *ChannelConfigurator::prepareColorButton(const QColor &defaultColor)
+{
+   auto selectColorButton = new QPushButton();
+   auto setColor = [selectColorButton](const QColor& color) {
+      QString qss = QString( "background-color: %1" ).arg( color.name() );
+      selectColorButton->setStyleSheet( qss );
+      selectColorButton->setText( color.name() );
+   };
+
+   setColor( defaultColor );
+
+   connect( selectColorButton, &QPushButton::clicked, [this, selectColorButton, setColor](){
+       QColor color = QColorDialog::getColor(QColor(selectColorButton->text()), this );
+       if( color.isValid() )
+       {
+          setColor( color );
+       }
+   });
+   return selectColorButton;
+}
+
+QLabel *ChannelConfigurator::prepareUUIDLabel(const QUuid &uuid)
+{
+   return new QLabel(uuid.toString());
+}
+
 bool ChannelConfigurator::isTableDataValid() const
 {
 
@@ -384,10 +460,15 @@ bool ChannelConfigurator::isTableDataValid() const
         for ( int colIndex = 0; colIndex < ui->tableWidget->columnCount(); ++colIndex)
         {
             auto itemPtr = ui->tableWidget->item( rowIndex, colIndex );
+
             if ( nullptr == itemPtr )
             {
-                isValid = false;
-                qDebug() << "col:" << colIndex << "row:" << rowIndex << " is empty (nullptr)";
+                auto widgetPtr = ui->tableWidget->cellWidget(rowIndex, colIndex);
+                if ( nullptr == widgetPtr )
+                {
+                   isValid = false;
+                   qDebug() << "col:" << colIndex << "row:" << rowIndex << " is empty (nullptr)";
+                }
                 continue;
             }
 
@@ -414,6 +495,8 @@ bool ChannelConfigurator::isTableDataValid() const
                 }
                 break;
             }
+            case 6: break;
+            case 7: break;
 
             default:
             {
@@ -444,14 +527,18 @@ void ChannelConfigurator::on_tableWidget_customContextMenuRequested( const QPoin
 
     connect(newAct, &QAction::triggered, [this]()
     {
+       int index = 0;
         if ( ui->tableWidget->rowCount() == 0 )
         {
-            ui->tableWidget->setRowCount(1);
+           ui->tableWidget->setRowCount(1);
         }
         else
         {
-            ui->tableWidget->insertRow( ui->tableWidget->currentRow() );
+           index = ui->tableWidget->currentRow();
+           ui->tableWidget->insertRow( index );
         }
+        ui->tableWidget->setCellWidget(index, 6, prepareColorButton( QColorConstants::Red ));
+        ui->tableWidget->setCellWidget(index, 7, prepareUUIDLabel( QUuid::createUuid() ));
         setEnableOkButton(isTableDataValid());
     });
 
@@ -466,6 +553,17 @@ void ChannelConfigurator::on_tableWidget_customContextMenuRequested( const QPoin
              && ui->tableWidget->currentRow() < ui->tableWidget->rowCount() )
         {
             qDebug() << "Delete";
+            int index = ui->tableWidget->currentRow();
+            auto button = ui->tableWidget->cellWidget(index, 6);
+            if ( button)
+            {
+               delete button;
+            }
+            auto label = ui->tableWidget->cellWidget(index, 7);
+            if ( label )
+            {
+               delete label;
+            }
             ui->tableWidget->removeRow( ui->tableWidget->currentRow() );
         }
         setEnableOkButton(isTableDataValid());
@@ -481,7 +579,7 @@ void ChannelConfigurator::on_tableWidget_customContextMenuRequested( const QPoin
 
 }
 
-void ChannelConfigurator::on_tableWidget_itemChanged( QTableWidgetItem *item )
+void ChannelConfigurator::on_tableWidget_itemChanged( QTableWidgetItem * )
 {
     setEnableOkButton(isTableDataValid());
 }

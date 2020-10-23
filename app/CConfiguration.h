@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <vector>
+#include <QUuid>
 
 class Channel
 {
@@ -12,13 +13,17 @@ public:
         const uint32_t& achannel,
         const uint32_t& avoltage,
         const uint32_t& aspectrumIndex,
-        const double& amultipler)
+        const double& amultipler,
+        const QString& acolor,
+        const QUuid& auuid)
         : label( alabel )
         , unit( aunit )
         , channel( achannel )
         , voltage( avoltage )
         , spectrumIndex( aspectrumIndex )
         , multipler( amultipler )
+        , color( acolor )
+        , uuid( auuid )
     {}
     QString label;
     uint32_t unit;
@@ -26,6 +31,8 @@ public:
     uint32_t voltage;
     uint32_t spectrumIndex;
     double multipler;
+    QString color;
+    QUuid uuid;
 };
 
 class CConfigation
