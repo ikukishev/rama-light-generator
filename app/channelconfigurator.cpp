@@ -53,7 +53,24 @@ QDialog::DialogCode ChannelConfigurator::display()
         ui->tableWidget->setCellWidget(0, 7, prepareUUIDLabel( QUuid::createUuid() ));
     }
     setEnableOkButton(isTableDataValid());
-    return static_cast< QDialog::DialogCode >( exec() );
+    auto result = static_cast< QDialog::DialogCode >( exec() );
+
+//    for ( int rowIndex = 0; rowIndex < (int)m_channels.size(); ++rowIndex)
+//    {
+//       auto button = ui->tableWidget->cellWidget(rowIndex, 6);
+//       if ( button)
+//       {
+//          delete button;
+//       }
+//       auto label = ui->tableWidget->cellWidget(rowIndex, 7);
+//       if ( label )
+//       {
+//          delete label;
+//       }
+
+//    }
+
+    return result;
 }
 
 void ChannelConfigurator::load()
@@ -250,6 +267,7 @@ void ChannelConfigurator::persist()
 
 void ChannelConfigurator::updateTableData()
 {
+   ui->tableWidget->clear();
     ui->tableWidget->setRowCount(m_channels.size());
 
     for ( int rowIndex = 0; rowIndex < (int)m_channels.size(); ++rowIndex)

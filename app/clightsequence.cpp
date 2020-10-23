@@ -204,3 +204,49 @@ void CLightSequence::generateSequense()
 {
    qDebug() << __FUNCTION__;
 }
+
+void CLightSequence::channelConfigurationUpdated()
+{
+   std::list<decltype (m_channelConfiguration.begin())> forCleanup;
+   for ( auto cc = m_channelConfiguration.begin(); cc != m_channelConfiguration.end(); ++cc )
+   {
+      if ( !m_configuration.hasChannel( (*cc)->channelUuid ) )
+      {
+         forCleanup.push_back( cc );
+      }
+   }
+
+   for ( auto it : forCleanup )
+   {
+      m_channelConfiguration.erase( it );
+   }
+
+   for( const auto& channel : m_configuration.channels() )
+   {
+      if ( nullptr == getConfiguration( channel.uuid ) )
+      {
+         m_channelConfiguration.push_back( std::make_shared<SequenceChannelConfigation>( channel.uuid ));
+      }
+   }
+}
+
+QJsonObject CLightSequence::serialize() const
+{
+   return QJsonObject();
+}
+
+std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::getConfiguration(const QUuid &uuid)
+{
+   std::shared_ptr<SequenceChannelConfigation> cc(nullptr);
+
+   for ( auto& ptr : m_channelConfiguration )
+   {
+      if ( uuid == ptr->channelUuid )
+      {
+         cc = ptr;
+         break;
+      }
+   }
+
+   return cc;
+}

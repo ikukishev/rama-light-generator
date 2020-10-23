@@ -7,13 +7,12 @@
 #include <algorithm>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-    , m_spectrograph( new Spectrograph( ))
-    , m_channelConfigurator( new ChannelConfigurator( this ))
+    : QMainWindow( parent )
+    , ui( new Ui::MainWindow )
+    , m_spectrograph( new Spectrograph( ) )
+    , m_channelConfigurator( new ChannelConfigurator( this ) )
 {
     ui->setupUi(this);
-
     QHeaderView * header = ui->tableWidget->horizontalHeader();
     header->setSectionResizeMode(1, QHeaderView::Stretch);
     header->setSectionResizeMode(4, QHeaderView::Stretch);
@@ -126,5 +125,8 @@ void MainWindow::on_actionChannel_configuration_triggered()
 
 void MainWindow::channelConfigurationChanged()
 {
-   qDebug() << __FUNCTION__;
+   for ( auto& channel : m_sequences )
+   {
+      channel->channelConfigurationUpdated();
+   }
 }

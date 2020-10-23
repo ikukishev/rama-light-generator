@@ -35,7 +35,7 @@ target.path = $$[QT_INSTALL_EXAMPLES]/multimedia/spectrum
 INSTALLS += target
 
 CONFIG += install_ok  # Do not cargo-cult this!
-
+CONFIG += c++17
 # Deployment
 
 DESTDIR = ..$${spectrum_build_dir}

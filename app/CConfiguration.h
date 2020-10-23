@@ -49,6 +49,20 @@ public:
 
    virtual const std::vector<Channel>& channels() const = 0;
 
+   bool hasChannel( const QUuid &uuid ) const
+   {
+      bool result = false;
+      for ( auto& cn : channels() )
+      {
+         if ( uuid == cn.uuid )
+         {
+            result = true;
+            break;
+         }
+      }
+      return result;
+   }
+
 protected:
    QString   destinationFolder;
 
