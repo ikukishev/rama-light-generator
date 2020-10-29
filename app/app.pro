@@ -7,6 +7,7 @@ TARGET = spectrum
 QT       += multimedia widgets
 
 SOURCES  += channelconfigurator.cpp \
+            CConfiguration.cpp \
             clightsequence.cpp \
             main.cpp \
             mainwindow.cpp \

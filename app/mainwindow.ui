@@ -30,7 +30,7 @@
        </sizepolicy>
       </property>
       <property name="selectionMode">
-       <enum>QAbstractItemView::NoSelection</enum>
+       <enum>QAbstractItemView::SingleSelection</enum>
       </property>
       <property name="textElideMode">
        <enum>Qt::ElideMiddle</enum>
@@ -111,7 +111,7 @@
      <x>0</x>
      <y>0</y>
      <width>1306</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

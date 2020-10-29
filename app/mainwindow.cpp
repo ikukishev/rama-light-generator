@@ -114,7 +114,7 @@ void MainWindow::load()
                     std::shared_ptr<CLightSequence> seqPtr = CLightSequence::fromJson( seq.toObject(), *this );
                     if ( seqPtr )
                     {
-                        connect( seqPtr.get(), &CLightSequence::deleteTriggered, this, &MainWindow::sequenseDeleted);
+                        adjustSequense( seqPtr );
                         m_sequences.push_back(seqPtr);
                     }
                 }
@@ -162,6 +162,11 @@ void MainWindow::sequenseDeleted(CLightSequence *thisObject)
     }
 }
 
+void MainWindow::sequensePlayStarted(CLightSequence *thisObject)
+{
+    qDebug() << __FUNCTION__ << thisObject->getFileName().c_str();
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
    qDebug() << __FUNCTION__;
@@ -185,7 +190,7 @@ void MainWindow::on_actionOpen_triggered()
             qDebug() << file;
             auto sq = std::make_shared<CLightSequence>( file.toStdString(), *this );
 
-            connect( sq.get(), &CLightSequence::deleteTriggered, this, &MainWindow::sequenseDeleted);
+            adjustSequense(sq);
 
             m_sequences.emplace_back( sq );
          }
@@ -225,4 +230,13 @@ void MainWindow::channelConfigurationChanged()
    {
       channel->channelConfigurationUpdated();
    }
+}
+
+void MainWindow::adjustSequense( std::shared_ptr<CLightSequence> &seq )
+{
+    if ( seq )
+    {
+        connect( seq.get(), &CLightSequence::deleteTriggered, this, &MainWindow::sequenseDeleted);
+        connect( seq.get(), &CLightSequence::playStarted, this, &MainWindow::sequensePlayStarted );
+    }
 }

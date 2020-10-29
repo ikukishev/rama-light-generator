@@ -9,6 +9,22 @@
 #include <list>
 
 
+class CLightSequence;
+
+class IInnerCommunicationGlue : public QObject
+{
+    Q_OBJECT
+
+public:
+    IInnerCommunicationGlue(QObject* parent);
+
+    void sendSequenseEvent( CLightSequence* sequense );
+
+signals:
+
+   void sequenseEvent( CLightSequence* sequense );
+
+};
 
 class CLightSequence : public QObject
 {
@@ -52,17 +68,26 @@ public:
       QUuid channelUuid;
       std::shared_ptr< uint32_t > spectrumIndex;
       std::shared_ptr< double > multipler;
+      double minimumLevel = 0.0;
    };
 
-   explicit CLightSequence(const std::string& fileName, const CConfigation& configuration );
-   explicit CLightSequence(const std::string& fileName, const CConfigation& configuration, std::list<std::shared_ptr<SequenceChannelConfigation>>&& channelConfiguration );
+
+
+   explicit CLightSequence(const std::string& fileName, const CConfigation& configuration);
+   explicit CLightSequence(const std::string& fileName, const CConfigation& configuration,
+                           std::list<std::shared_ptr<SequenceChannelConfigation>>&& channelConfiguration );
    ~CLightSequence();
 
    const std::vector<QWidget*>& getControlWidgets() const { return m_controlWidgets; }
 
    bool isGenerateStarted() const { return m_isGenerateStarted; }
 signals:
-   void deleteTriggered(CLightSequence* thisObject);
+   void deleteTriggered( CLightSequence* thisObject );
+   void generationStarted();
+   void playStarted( CLightSequence* thisObject );
+   void playFinished( CLightSequence* thisObject );
+   void processFinished();
+   void positionChanged(const SpectrumData& spectrum);
 
 private:
 
@@ -78,7 +103,13 @@ public:
 
    std::shared_ptr<SequenceChannelConfigation> getConfiguration( const QUuid& uuid );
 
-   static std::shared_ptr<CLightSequence> fromJson( const QJsonObject& jo, const CConfigation& configuration );
+   static std::shared_ptr<CLightSequence> fromJson(const QJsonObject& jo, const CConfigation& configuration);
+
+   const std::string& getFileName() const;
+
+private:
+
+   static IInnerCommunicationGlue sPlayEventDistributor;
 
 private:
     const CConfigation& m_configuration;
@@ -87,6 +118,7 @@ private:
 
     std::vector<QWidget*> m_controlWidgets;
     std::list<std::shared_ptr<SequenceChannelConfigation>> m_channelConfiguration;
+    std::list<std::shared_ptr<QMetaObject::Connection>> m_conncetionToDestroy;
 
     bool m_isGenerateStarted;
 };

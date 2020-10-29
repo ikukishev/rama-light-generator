@@ -15,6 +15,21 @@ const QString cKeyChannelConfiguration("configuration");
 const QString cKeyChannelUUID("uuid");
 const QString cKeyChannelSpectrumIndex("spectrumIndex");
 const QString cKeyChannelMultipler("multipler");
+const QString cKeyChannelMinimumLevel("minimumLevel");
+
+
+IInnerCommunicationGlue CLightSequence::sPlayEventDistributor(nullptr);
+
+
+IInnerCommunicationGlue::IInnerCommunicationGlue(QObject *parent)
+    : QObject(parent)
+{}
+
+void IInnerCommunicationGlue::sendSequenseEvent(CLightSequence *sequense)
+{
+    emit sequenseEvent( sequense );
+}
+
 
 CLightSequence::CLightSequence(const std::string &fileName, const CConfigation &configuration)
     : QObject( nullptr )
@@ -90,9 +105,10 @@ void CLightSequence::adjust()
    trackPosition->setMaximum( m_audioFile->duration() );
    trackPosition->setMinimum(0);
 
-   auto playPositionChanging = [trackPosition, cacProgressLabel, durationLabel](const SpectrumData& spectrum){
+   auto playPositionChanging = [this, trackPosition, cacProgressLabel, durationLabel](const SpectrumData& spectrum){
       trackPosition->setValue(spectrum.position);
       durationLabel->setText( cacProgressLabel() );
+      emit positionChanged( spectrum );
    };
 
    auto deleter = [](QMetaObject::Connection* con){ disconnect(*con); delete con; };
@@ -113,18 +129,47 @@ void CLightSequence::adjust()
 
    auto playButton = new QPushButton();
    playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
-   connect(playButton, &QPushButton::clicked, [this, playButton ](bool /*checked*/){
-      if ( QBassAudioFile::EState::Play == m_audioFile->state() )
-      {
-         m_audioFile->stop();
-         playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
-      }
-      else if ( QBassAudioFile::EState::Stop == m_audioFile->state() )
-      {
-         m_audioFile->play();
-         playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPause) );
-      }
+
+   auto playButtonClickedEvent = [this, playButton ](bool /*checked*/) {
+
+       if ( isGenerateStarted() )
+       {
+           return;
+       }
+
+       if ( QBassAudioFile::EState::Play == m_audioFile->state() )
+       {
+          m_audioFile->stop();
+          playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
+       }
+       else if ( QBassAudioFile::EState::Stop == m_audioFile->state() )
+       {
+          m_audioFile->play();
+          playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPause) );
+          emit playStarted( this );
+          sPlayEventDistributor.sendSequenseEvent( this );
+       }
+
+   };
+
+   connect(playButton, &QPushButton::clicked, playButtonClickedEvent );
+
+   connect( m_audioFile.get(), &QBassAudioFile::processFinished, [this, playButton](){
+        playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
+        emit playFinished( this );
    });
+
+
+   m_conncetionToDestroy.push_back( std::shared_ptr<QMetaObject::Connection>(
+               new QMetaObject::Connection( connect( &sPlayEventDistributor, &IInnerCommunicationGlue::sequenseEvent, [this, playButtonClickedEvent]( CLightSequence* sequense ){
+       if ( this != sequense )
+       {
+           if (  QBassAudioFile::EState::Play == m_audioFile->state() )
+           {
+               playButtonClickedEvent( false );
+           }
+       }
+   } )), deleter ));
 
    //*************************************************************
 
@@ -171,9 +216,11 @@ void CLightSequence::adjust()
          trackVolume->setValue(0);
          m_audioFile->play();
          labelStatus->setText("Started");
+         emit generationStarted();
 
          (*connectionFinishPtr) = connect( m_audioFile.get(), &QBassAudioFile::processFinished, [ this, genStop, labelStatus ](){
             generateSequense();
+            emit processFinished();
             genStop();
             labelStatus->setText("Done");
          });
@@ -182,6 +229,7 @@ void CLightSequence::adjust()
 
    //*************************************************************
 
+   m_controlWidgets.clear();
    m_controlWidgets.reserve(8);
 
    m_controlWidgets.push_back( deleteButton );
@@ -205,6 +253,7 @@ void CLightSequence::destroy()
    }
 
    m_controlWidgets.clear();
+   m_conncetionToDestroy.clear();
    qDebug() << __FUNCTION__ << m_fileName.c_str();
 }
 
@@ -316,6 +365,11 @@ std::shared_ptr<CLightSequence> CLightSequence::fromJson(const QJsonObject &jo, 
     return ls;
 }
 
+const std::string &CLightSequence::getFileName() const
+{
+    return m_fileName;
+}
+
 void CLightSequence::SequenceChannelConfigation::setSpectrumIndex(const uint32_t index)
 {
     if ( isSpectrumIndexSet() )
@@ -346,6 +400,8 @@ QJsonObject CLightSequence::SequenceChannelConfigation::serialize() const
     jo[ cKeyChannelUUID ] = channelUuid.toString();
     if ( spectrumIndex ) jo[ cKeyChannelSpectrumIndex ] = static_cast<int>(*spectrumIndex);
     if ( multipler ) jo[ cKeyChannelMultipler ] = static_cast<double>(*multipler);
+    jo[ cKeyChannelMinimumLevel ] = minimumLevel;
+
     return jo;
 }
 
@@ -382,6 +438,15 @@ std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::Sequ
                     }
                 }
 
+                if ( jo.contains( cKeyChannelMinimumLevel ) )
+                {
+                    double m = jo[ cKeyChannelMinimumLevel ].toDouble(-1.0);
+                    if ( -1.0 != m )
+                    {
+                        cc->minimumLevel = m;
+                    }
+                }
+
             }
             else
             {
@@ -392,3 +457,5 @@ std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::Sequ
 
     return cc;
 }
+
+

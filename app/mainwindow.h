@@ -38,6 +38,8 @@ private slots:
 
 private:
 
+    void adjustSequense( std::shared_ptr<CLightSequence>& seq );
+
     void channelConfigurationChanged();
 
     void persist();
@@ -47,6 +49,8 @@ private:
     void updateTable();
 
     void sequenseDeleted(CLightSequence* thisObject);
+
+    void sequensePlayStarted(CLightSequence* thisObject);
 
 protected:
 

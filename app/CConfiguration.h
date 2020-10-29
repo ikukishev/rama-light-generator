@@ -4,6 +4,7 @@
 #include <QString>
 #include <vector>
 #include <QUuid>
+#include <QObject>
 
 class Channel
 {
@@ -35,9 +36,9 @@ public:
     QUuid uuid;
 };
 
+
 class CConfigation
 {
-
 public:
 
    virtual ~CConfigation() = default;
@@ -48,6 +49,7 @@ public:
    }
 
    virtual const std::vector<Channel>& channels() const = 0;
+
 
    bool hasChannel( const QUuid &uuid ) const
    {
@@ -62,6 +64,7 @@ public:
       }
       return result;
    }
+
 
 protected:
    QString   destinationFolder;
