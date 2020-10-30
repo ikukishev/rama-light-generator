@@ -61,6 +61,7 @@ private:
     Spectrograph*                   m_spectrograph;
     ChannelConfigurator*            m_channelConfigurator;
     std::vector<std::shared_ptr<CLightSequence>> m_sequences;
+    std::shared_ptr<QMetaObject::Connection> m_spectrumConnection;
 
 };
 

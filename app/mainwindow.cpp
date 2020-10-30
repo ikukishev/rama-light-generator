@@ -21,11 +21,13 @@ MainWindow::MainWindow(QWidget *parent)
     , ui( new Ui::MainWindow )
     , m_spectrograph( new Spectrograph( ) )
     , m_channelConfigurator( new ChannelConfigurator( this ) )
+    , m_spectrumConnection( nullptr )
 {
     ui->setupUi(this);
     QHeaderView * header = ui->tableWidget->horizontalHeader();
     header->setSectionResizeMode(1, QHeaderView::Stretch);
     header->setSectionResizeMode(4, QHeaderView::Stretch);
+    m_spectrograph->show();
     load();
 }
 
@@ -165,6 +167,11 @@ void MainWindow::sequenseDeleted(CLightSequence *thisObject)
 void MainWindow::sequensePlayStarted(CLightSequence *thisObject)
 {
     qDebug() << __FUNCTION__ << thisObject->getFileName().c_str();
+
+    m_spectrumConnection = std::shared_ptr<QMetaObject::Connection>(
+                new QMetaObject::Connection( connect(thisObject, &CLightSequence::positionChanged, m_spectrograph, &Spectrograph::spectrumChanged)),
+                [](QMetaObject::Connection* con){ disconnect(*con); delete con; } );
+
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
