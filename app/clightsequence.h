@@ -69,6 +69,7 @@ public:
       std::shared_ptr< uint32_t > spectrumIndex;
       std::shared_ptr< double > multipler;
       double minimumLevel = 0.0;
+      double fading = 1.0;
    };
 
 

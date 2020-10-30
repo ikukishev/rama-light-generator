@@ -93,11 +93,36 @@
      <widget class="QWidget" name="widget" native="true">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
-        <widget class="QTableWidget" name="tableWidget_2"/>
-       </item>
-       <item>
-        <widget class="QWidget" name="widget_2" native="true">
-         <layout class="QVBoxLayout" name="verticalLayout_2"/>
+        <widget class="QTableWidget" name="tableWidget_2">
+         <property name="maximumSize">
+          <size>
+           <width>900</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <attribute name="horizontalHeaderDefaultSectionSize">
+          <number>180</number>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>Chnnel Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Multipler</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Threshold</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Fading</string>
+          </property>
+         </column>
         </widget>
        </item>
       </layout>

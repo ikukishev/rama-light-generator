@@ -268,6 +268,17 @@ void ChannelConfigurator::persist()
 void ChannelConfigurator::updateTableData()
 {
    ui->tableWidget->clear();
+   QStringList labels;
+   labels << "Label";
+   labels << "Unit";
+   labels << "Channel";
+   labels << "Voltage";
+   labels << "SpectrumBar index";
+   labels << "Multipler";
+   labels << "Color";
+   labels << "UUID";
+
+    ui->tableWidget->setHorizontalHeaderLabels(labels);
     ui->tableWidget->setRowCount(m_channels.size());
 
     for ( int rowIndex = 0; rowIndex < (int)m_channels.size(); ++rowIndex)

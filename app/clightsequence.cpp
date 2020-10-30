@@ -16,6 +16,7 @@ const QString cKeyChannelUUID("uuid");
 const QString cKeyChannelSpectrumIndex("spectrumIndex");
 const QString cKeyChannelMultipler("multipler");
 const QString cKeyChannelMinimumLevel("minimumLevel");
+const QString cKeyChannelFading("fading");
 
 
 IInnerCommunicationGlue CLightSequence::sPlayEventDistributor(nullptr);
@@ -401,6 +402,7 @@ QJsonObject CLightSequence::SequenceChannelConfigation::serialize() const
     if ( spectrumIndex ) jo[ cKeyChannelSpectrumIndex ] = static_cast<int>(*spectrumIndex);
     if ( multipler ) jo[ cKeyChannelMultipler ] = static_cast<double>(*multipler);
     jo[ cKeyChannelMinimumLevel ] = minimumLevel;
+    jo[ cKeyChannelFading ] = fading;
 
     return jo;
 }
@@ -444,6 +446,15 @@ std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::Sequ
                     if ( -1.0 != m )
                     {
                         cc->minimumLevel = m;
+                    }
+                }
+
+                if ( jo.contains( cKeyChannelFading ) )
+                {
+                    double m = jo[ cKeyChannelFading ].toDouble(-1.0);
+                    if ( -1.0 != m )
+                    {
+                        cc->fading = m;
                     }
                 }
 

@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QLabel>
 
 
 const QString cSequenseConfigurationFileName( "sequenseConfiguration.json" );
@@ -19,7 +20,7 @@ const QString cKeySequenses( "sequenses" );
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow( parent )
     , ui( new Ui::MainWindow )
-    , m_spectrograph( new Spectrograph( ) )
+    , m_spectrograph( nullptr )
     , m_channelConfigurator( new ChannelConfigurator( this ) )
     , m_spectrumConnection( nullptr )
 {
@@ -27,6 +28,14 @@ MainWindow::MainWindow(QWidget *parent)
     QHeaderView * header = ui->tableWidget->horizontalHeader();
     header->setSectionResizeMode(1, QHeaderView::Stretch);
     header->setSectionResizeMode(4, QHeaderView::Stretch);
+
+    header = ui->tableWidget_2->horizontalHeader();
+    header->setSectionResizeMode(1, QHeaderView::Stretch);
+    header->setSectionResizeMode(2, QHeaderView::Stretch);
+
+    m_spectrograph = new Spectrograph(  );
+
+    ui->horizontalLayout_3->addWidget(m_spectrograph);
     m_spectrograph->show();
     load();
 }
@@ -171,6 +180,67 @@ void MainWindow::sequensePlayStarted(CLightSequence *thisObject)
     m_spectrumConnection = std::shared_ptr<QMetaObject::Connection>(
                 new QMetaObject::Connection( connect(thisObject, &CLightSequence::positionChanged, m_spectrograph, &Spectrograph::spectrumChanged)),
                 [](QMetaObject::Connection* con){ disconnect(*con); delete con; } );
+
+    ui->tableWidget_2->clear();
+
+    QStringList labels;
+    labels << "Chnnel Name";
+    labels << "Multipler";
+    labels << "Threshold";
+    labels << "Fading";
+
+     ui->tableWidget_2->setHorizontalHeaderLabels(labels);
+
+    ui->tableWidget_2->setRowCount( m_channelConfigurator->channels().size() );
+    for ( std::size_t i = 0; i < m_channelConfigurator->channels().size(); ++i )
+    {
+        const auto& channel = m_channelConfigurator->channels()[i];
+        ui->tableWidget_2->setCellWidget( i, 0, new QLabel( channel.label ) );
+
+        auto multiplerSlider = new QSlider( Qt::Horizontal );
+        multiplerSlider->setMaximum( 100 );
+        multiplerSlider->setMinimum( 0 );
+        auto channelConfiguration = thisObject->getConfiguration( channel.uuid );
+        if ( channelConfiguration->isMultiplerSet())
+        {
+            multiplerSlider->setValue( 10.0 * (*channelConfiguration->multipler) );
+        }
+        else
+        {
+            multiplerSlider->setValue( channel.multipler * 10.0 );
+        }
+        connect(multiplerSlider, &QSlider::valueChanged, [channelConfiguration]( int value ){
+            channelConfiguration->setMultipler( double(value)/10 );
+        });
+
+        ui->tableWidget_2->setCellWidget( i, 1, multiplerSlider );
+
+
+        auto threshHold = new QSlider( Qt::Horizontal );
+        threshHold->setMaximum( 100 );
+        threshHold->setMinimum( 0 );
+
+        threshHold->setValue( 100.0 * (channelConfiguration->minimumLevel) );
+
+        connect(threshHold, &QSlider::valueChanged, [channelConfiguration]( int value ){
+            channelConfiguration->minimumLevel =  double(value)/100.0;
+        });
+
+        ui->tableWidget_2->setCellWidget( i, 2, threshHold );
+
+        auto fading = new QSlider( Qt::Horizontal );
+        fading->setMaximum( 100 );
+        fading->setMinimum( 0 );
+
+        fading->setValue( 10.0 * (channelConfiguration->fading ) );
+
+        connect(fading, &QSlider::valueChanged, [channelConfiguration]( int value ){
+            channelConfiguration->fading =  double(value)/10.0;
+        });
+
+        ui->tableWidget_2->setCellWidget( i, 3, fading );
+
+    }
 
 }
 

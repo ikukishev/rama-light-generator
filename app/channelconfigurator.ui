@@ -27,7 +27,7 @@
      </attribute>
      <column>
       <property name="text">
-       <string>Channel label</string>
+       <string>Label</string>
       </property>
      </column>
      <column>
