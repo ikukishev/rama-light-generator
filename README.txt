@@ -1,4 +1,4 @@
-Spectrum analyser demo app
+RamaLight Spectrum analyser demo app
 ==========================
 
 Introduction
