@@ -9,6 +9,7 @@ QT       += multimedia widgets
 SOURCES  += channelconfigurator.cpp \
             CConfiguration.cpp \
             clightsequence.cpp \
+            csequensegenerator.cpp \
             main.cpp \
             mainwindow.cpp \
             qbassaudiofile.cpp \
@@ -17,6 +18,7 @@ SOURCES  += channelconfigurator.cpp \
 HEADERS  += channelconfigurator.h \
             CConfiguration.h \
             clightsequence.h \
+            csequensegenerator.h \
             mainwindow.h \
             qbassaudiofile.h \
             spectrograph.h
@@ -25,6 +27,7 @@ fftreal_dir = ../3rdparty/fftreal
 
 INCLUDEPATH += $${fftreal_dir}
 INCLUDEPATH += ../3rdparty/bass24-linux
+INCLUDEPATH += ../3rdparty/
 
 RESOURCES = fft-base/spectrum.qrc
 

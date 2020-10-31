@@ -9,6 +9,8 @@
 #include <QFileInfo>
 #include <QDebug>
 #include <QJsonArray>
+#include "csequensegenerator.h"
+
 
 const QString cKeyFileName("file");
 const QString cKeyChannelConfiguration("configuration");
@@ -261,6 +263,7 @@ void CLightSequence::destroy()
 void CLightSequence::generateSequense()
 {
     qDebug() << __FUNCTION__;
+    CSequenseGenerator::generateLms( this );
 }
 
 
@@ -370,6 +373,8 @@ const std::string &CLightSequence::getFileName() const
 {
     return m_fileName;
 }
+
+
 
 void CLightSequence::SequenceChannelConfigation::setSpectrumIndex(const uint32_t index)
 {

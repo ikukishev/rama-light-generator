@@ -104,10 +104,13 @@ public:
    QJsonObject serialize() const;
 
    std::shared_ptr<SequenceChannelConfigation> getConfiguration( const QUuid& uuid );
+   const CConfigation& getGlobalConfiguration() const { return m_configuration; }
 
    static std::shared_ptr<CLightSequence> fromJson(const QJsonObject& jo, const CConfigation& configuration);
 
    const std::string& getFileName() const;
+
+   const std::shared_ptr<QBassAudioFile>& getAudioFile() const { return m_audioFile; }
 
 private:
 
