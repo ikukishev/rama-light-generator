@@ -23,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_spectrograph( nullptr )
     , m_channelConfigurator( new ChannelConfigurator( this ) )
     , m_spectrumConnection( nullptr )
+    , m_current(  )
 {
     ui->setupUi(this);
     QHeaderView * header = ui->tableWidget->horizontalHeader();
@@ -158,38 +159,65 @@ void MainWindow::updateTable()
     qDebug() << __FUNCTION__ << "m_sequences.size() =" << m_sequences.size() << "done";
 }
 
-void MainWindow::sequenseDeleted(CLightSequence *thisObject)
+void MainWindow::sequenseDeleted( std::weak_ptr<CLightSequence> thisObject)
 {
+    auto sequense = thisObject.lock();
+    if ( nullptr == sequense )
+    {
+        return;
+    }
+
     std::size_t i = 0;
     auto it = m_sequences.begin();
     for ( ; i < m_sequences.size(); ++i, ++it)
     {
-       if ( m_sequences[i].get() == thisObject )
+       if ( m_sequences[i] == sequense )
        {
           m_sequences.erase( it );
           ui->tableWidget->removeRow( i );
           break;
        }
     }
+
+    if ( m_current.lock() == sequense )
+    {
+        sequense = nullptr;
+        m_current.reset();
+    }
+
+    sequensePlayStarted( m_current );
+
 }
 
-void MainWindow::sequensePlayStarted(CLightSequence *thisObject)
+void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
 {
-    qDebug() << __FUNCTION__ << thisObject->getFileName().c_str();
-
-    m_spectrumConnection = std::shared_ptr<QMetaObject::Connection>(
-                new QMetaObject::Connection( connect(thisObject, &CLightSequence::positionChanged, m_spectrograph, &Spectrograph::spectrumChanged)),
-                [](QMetaObject::Connection* con){ disconnect(*con); delete con; } );
 
     ui->tableWidget_2->clear();
-
     QStringList labels;
     labels << "Chnnel Name";
-    labels << "Multipler";
+    labels << "Gain";
     labels << "Threshold";
     labels << "Fading";
 
-     ui->tableWidget_2->setHorizontalHeaderLabels(labels);
+    ui->tableWidget_2->setHorizontalHeaderLabels(labels);
+
+    auto sequense = thisObject.lock();
+    if ( nullptr == sequense )
+    {
+
+        ui->tableWidget_2->setRowCount(0);
+        m_spectrumConnection = nullptr;
+        return;
+    }
+
+    m_current = thisObject;
+
+    qDebug() << __FUNCTION__ << sequense->getFileName().c_str();
+
+    m_spectrumConnection = std::shared_ptr<QMetaObject::Connection>(
+                new QMetaObject::Connection( connect(sequense.get(), &CLightSequence::positionChanged,
+                                                     m_spectrograph, &Spectrograph::spectrumChanged) ),
+                [](QMetaObject::Connection* con){ disconnect(*con); delete con; } );
 
     ui->tableWidget_2->setRowCount( m_channelConfigurator->channels().size() );
     for ( std::size_t i = 0; i < m_channelConfigurator->channels().size(); ++i )
@@ -197,23 +225,23 @@ void MainWindow::sequensePlayStarted(CLightSequence *thisObject)
         const auto& channel = m_channelConfigurator->channels()[i];
         ui->tableWidget_2->setCellWidget( i, 0, new QLabel( channel.label ) );
 
-        auto multiplerSlider = new QSlider( Qt::Horizontal );
-        multiplerSlider->setMaximum( 100 );
-        multiplerSlider->setMinimum( 0 );
-        auto channelConfiguration = thisObject->getConfiguration( channel.uuid );
-        if ( channelConfiguration->isMultiplerSet())
+        auto gainSlider = new QSlider( Qt::Horizontal );
+        gainSlider->setMaximum( 100 );
+        gainSlider->setMinimum( 0 );
+        auto channelConfiguration = sequense->getConfiguration( channel.uuid );
+        if ( channelConfiguration->isGainSet())
         {
-            multiplerSlider->setValue( 10.0 * (*channelConfiguration->multipler) );
+            gainSlider->setValue( 10.0 * (*channelConfiguration->gain) );
         }
         else
         {
-            multiplerSlider->setValue( channel.multipler * 10.0 );
+            gainSlider->setValue( channel.multipler * 10.0 );
         }
-        connect(multiplerSlider, &QSlider::valueChanged, [channelConfiguration]( int value ){
-            channelConfiguration->setMultipler( double(value)/10 );
+        connect(gainSlider, &QSlider::valueChanged, [channelConfiguration]( int value ){
+            channelConfiguration->setGain( double(value)/10 );
         });
 
-        ui->tableWidget_2->setCellWidget( i, 1, multiplerSlider );
+        ui->tableWidget_2->setCellWidget( i, 1, gainSlider );
 
 
         auto threshHold = new QSlider( Qt::Horizontal );
@@ -262,7 +290,7 @@ void MainWindow::on_actionOpen_triggered()
    {
       if ( fileDialog.selectedFiles().count() > 0 )
       {
-         for (auto file : fileDialog.selectedFiles())
+         for ( auto file : fileDialog.selectedFiles() )
          {
             qDebug() << file;
             auto sq = std::make_shared<CLightSequence>( file.toStdString(), *this );
@@ -307,6 +335,7 @@ void MainWindow::channelConfigurationChanged()
    {
       channel->channelConfigurationUpdated();
    }
+   sequensePlayStarted( m_current );
 }
 
 void MainWindow::adjustSequense( std::shared_ptr<CLightSequence> &seq )

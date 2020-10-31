@@ -48,9 +48,9 @@ private:
 
     void updateTable();
 
-    void sequenseDeleted(CLightSequence* thisObject);
+    void sequenseDeleted(std::weak_ptr<CLightSequence> thisObject);
 
-    void sequensePlayStarted(CLightSequence* thisObject);
+    void sequensePlayStarted( std::weak_ptr<CLightSequence> thisObject);
 
 protected:
 
@@ -62,6 +62,8 @@ private:
     ChannelConfigurator*            m_channelConfigurator;
     std::vector<std::shared_ptr<CLightSequence>> m_sequences;
     std::shared_ptr<QMetaObject::Connection> m_spectrumConnection;
+    std::weak_ptr<CLightSequence> m_current;
+
 
 };
 

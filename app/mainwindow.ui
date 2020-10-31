@@ -42,10 +42,10 @@
        <enum>Qt::NoPen</enum>
       </property>
       <attribute name="horizontalHeaderVisible">
-       <bool>true</bool>
+       <bool>false</bool>
       </attribute>
       <attribute name="verticalHeaderVisible">
-       <bool>true</bool>
+       <bool>false</bool>
       </attribute>
       <column>
        <property name="text">
@@ -110,7 +110,7 @@
          </column>
          <column>
           <property name="text">
-           <string>Multipler</string>
+           <string>Gain</string>
           </property>
          </column>
          <column>

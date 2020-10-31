@@ -14,7 +14,7 @@ const QString cKeyFileName("file");
 const QString cKeyChannelConfiguration("configuration");
 const QString cKeyChannelUUID("uuid");
 const QString cKeyChannelSpectrumIndex("spectrumIndex");
-const QString cKeyChannelMultipler("multipler");
+const QString cKeyChannelGain("gain");
 const QString cKeyChannelMinimumLevel("minimumLevel");
 const QString cKeyChannelFading("fading");
 
@@ -74,7 +74,7 @@ void CLightSequence::adjust()
 
    auto deleteButton = new QPushButton("X");
    connect(deleteButton, &QPushButton::clicked, [this](bool /*checked*/){
-      emit deleteTriggered(this);
+      emit deleteTriggered( shared_from_this() );
    });
 
    //*************************************************************
@@ -147,7 +147,7 @@ void CLightSequence::adjust()
        {
           m_audioFile->play();
           playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPause) );
-          emit playStarted( this );
+          emit playStarted( shared_from_this() );
           sPlayEventDistributor.sendSequenseEvent( this );
        }
 
@@ -157,7 +157,7 @@ void CLightSequence::adjust()
 
    connect( m_audioFile.get(), &QBassAudioFile::processFinished, [this, playButton](){
         playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
-        emit playFinished( this );
+        emit playFinished( shared_from_this() );
    });
 
 
@@ -383,15 +383,15 @@ void CLightSequence::SequenceChannelConfigation::setSpectrumIndex(const uint32_t
     }
 }
 
-void CLightSequence::SequenceChannelConfigation::setMultipler(const double mul)
+void CLightSequence::SequenceChannelConfigation::setGain(const double mul)
 {
-    if ( isMultiplerSet() )
+    if ( isGainSet() )
     {
-        ( *multipler ) = mul;
+        ( *gain ) = mul;
     }
     else
     {
-        multipler = std::make_shared< double >( mul );
+        gain = std::make_shared< double >( mul );
     }
 }
 
@@ -400,7 +400,7 @@ QJsonObject CLightSequence::SequenceChannelConfigation::serialize() const
     QJsonObject jo;
     jo[ cKeyChannelUUID ] = channelUuid.toString();
     if ( spectrumIndex ) jo[ cKeyChannelSpectrumIndex ] = static_cast<int>(*spectrumIndex);
-    if ( multipler ) jo[ cKeyChannelMultipler ] = static_cast<double>(*multipler);
+    if ( gain ) jo[ cKeyChannelGain ] = static_cast<double>(*gain);
     jo[ cKeyChannelMinimumLevel ] = minimumLevel;
     jo[ cKeyChannelFading ] = fading;
 
@@ -431,12 +431,12 @@ std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::Sequ
                     }
                 }
 
-                if ( jo.contains( cKeyChannelMultipler ) )
+                if ( jo.contains( cKeyChannelGain ) )
                 {
-                    double m = jo[ cKeyChannelMultipler ].toDouble(-1.0);
+                    double m = jo[ cKeyChannelGain ].toDouble(-1.0);
                     if ( -1.0 != m )
                     {
-                        cc->setMultipler(m);
+                        cc->setGain(m);
                     }
                 }
 

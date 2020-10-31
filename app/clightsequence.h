@@ -27,6 +27,7 @@ signals:
 };
 
 class CLightSequence : public QObject
+        , public std::enable_shared_from_this<CLightSequence>
 {
    Q_OBJECT
 public:
@@ -41,7 +42,7 @@ public:
       SequenceChannelConfigation( const QUuid& achannelUuid, const uint32_t& spectrumIndex )
          : channelUuid( achannelUuid )
          , spectrumIndex( std::make_shared< uint32_t >( spectrumIndex ) )
-         , multipler( nullptr )
+         , gain( nullptr )
       {}
 
       SequenceChannelConfigation( const QUuid& achannelUuid,
@@ -49,16 +50,16 @@ public:
                                   const double& amultipler )
          : channelUuid( achannelUuid )
          , spectrumIndex( std::make_shared< uint32_t >( spectrumIndex ) )
-         , multipler( std::make_shared< double >( amultipler ) )
+         , gain( std::make_shared< double >( amultipler ) )
       {}
 
 
       bool isSpectrumIndexSet() const { return nullptr != spectrumIndex; }
-      bool isMultiplerSet() const { return nullptr != multipler; }
+      bool isGainSet() const { return nullptr != gain; }
       bool isSameChannel( const QUuid& auuid ) const { return auuid == channelUuid; }
 
       void setSpectrumIndex( const uint32_t index );
-      void setMultipler(const double mul );
+      void setGain(const double mul );
 
       QJsonObject serialize() const;
 
@@ -67,7 +68,7 @@ public:
    public:
       QUuid channelUuid;
       std::shared_ptr< uint32_t > spectrumIndex;
-      std::shared_ptr< double > multipler;
+      std::shared_ptr< double > gain;
       double minimumLevel = 0.0;
       double fading = 1.0;
    };
@@ -83,10 +84,10 @@ public:
 
    bool isGenerateStarted() const { return m_isGenerateStarted; }
 signals:
-   void deleteTriggered( CLightSequence* thisObject );
+   void deleteTriggered( std::weak_ptr<CLightSequence> thisObject );
    void generationStarted();
-   void playStarted( CLightSequence* thisObject );
-   void playFinished( CLightSequence* thisObject );
+   void playStarted( std::weak_ptr<CLightSequence> thisObject );
+   void playFinished( std::weak_ptr<CLightSequence> thisObject );
    void processFinished();
    void positionChanged(const SpectrumData& spectrum);
 
