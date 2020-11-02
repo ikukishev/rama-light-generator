@@ -5,6 +5,7 @@
 #include <bass.h>
 #include <vector>
 #include <memory>
+#include <list>
 #include <QTimer>
 #include <QString>
 
@@ -43,7 +44,7 @@ public:
     void setFileName( const std::string& fileName );
     const std::string& fileName() const { return m_fileName; }
 
-    const std::vector< std::shared_ptr<SpectrumData> >& getSpectrum() const
+    const std::list< std::shared_ptr<SpectrumData> >& getSpectrum() const
     { return m_spectrumData; }
 
     void resetFFTData();
@@ -59,7 +60,7 @@ Q_SIGNALS:
 
 private:
     std::string m_fileName;
-    std::vector< std::shared_ptr<SpectrumData> > m_spectrumData;
+    std::list< std::shared_ptr<SpectrumData> > m_spectrumData;
     QTimer * m_timer;
     HSTREAM m_stream;
     EState m_state;

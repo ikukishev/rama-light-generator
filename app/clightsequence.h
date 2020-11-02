@@ -95,15 +95,14 @@ private:
 
    void adjust();
    void destroy();
-   void generateSequense();
-
 
 public:
    void channelConfigurationUpdated();
 
    QJsonObject serialize() const;
 
-   std::shared_ptr<SequenceChannelConfigation> getConfiguration( const QUuid& uuid );
+   std::shared_ptr<SequenceChannelConfigation> getConfiguration( const QUuid& uuid ) const;
+
    const CConfigation& getGlobalConfiguration() const { return m_configuration; }
 
    static std::shared_ptr<CLightSequence> fromJson(const QJsonObject& jo, const CConfigation& configuration);

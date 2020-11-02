@@ -192,7 +192,7 @@ void CLightSequence::adjust()
    auto startButton = new QPushButton("Generate");
    startButton->setIcon(QIcon(":/images/record.png"));
    connect(startButton, &QPushButton::clicked, [ this, playButton, trackPosition,
-           deleteButton, connectionFinishPtr, labelStatus, trackVolume ](bool /*checked*/){
+           deleteButton, connectionFinishPtr, labelStatus, trackVolume ](bool){
 
       auto genStop = [=]()
       {
@@ -222,10 +222,17 @@ void CLightSequence::adjust()
          emit generationStarted();
 
          (*connectionFinishPtr) = connect( m_audioFile.get(), &QBassAudioFile::processFinished, [ this, genStop, labelStatus ](){
-            generateSequense();
+            if ( CSequenseGenerator::generateLms( this ) )
+            {
+                labelStatus->setText("Done");
+            }
+            else
+            {
+                labelStatus->setText("Done with error");
+            }
             emit processFinished();
             genStop();
-            labelStatus->setText("Done");
+
          });
       }
    });
@@ -258,12 +265,6 @@ void CLightSequence::destroy()
    m_controlWidgets.clear();
    m_conncetionToDestroy.clear();
    qDebug() << __FUNCTION__ << m_fileName.c_str();
-}
-
-void CLightSequence::generateSequense()
-{
-    qDebug() << __FUNCTION__;
-    CSequenseGenerator::generateLms( this );
 }
 
 
@@ -310,7 +311,7 @@ QJsonObject CLightSequence::serialize() const
     return jo;
 }
 
-std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::getConfiguration(const QUuid &uuid)
+std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::getConfiguration(const QUuid &uuid) const
 {
    std::shared_ptr<SequenceChannelConfigation> cc(nullptr);
 
