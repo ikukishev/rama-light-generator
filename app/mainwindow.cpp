@@ -17,6 +17,18 @@ const QString cKeyOutputDirectory( "outputDir" );
 const QString cKeySequenses( "sequenses" );
 
 
+void QLabelEx::mousePressEvent(QMouseEvent *event)
+{
+    emit clicked();
+    QLabel::mousePressEvent(event);
+}
+
+void QSliderEx::mousePressEvent(QMouseEvent *event)
+{
+    emit clicked();
+    QSlider::mousePressEvent(event);
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow( parent )
     , ui( new Ui::MainWindow )
@@ -223,12 +235,52 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
     for ( std::size_t i = 0; i < m_channelConfigurator->channels().size(); ++i )
     {
         const auto& channel = m_channelConfigurator->channels()[i];
-        ui->tableWidget_2->setCellWidget( i, 0, new QLabel( channel.label ) );
+        auto channelConfiguration = sequense->getConfiguration( channel.uuid );
 
-        auto gainSlider = new QSlider( Qt::Horizontal );
+        auto widgetPressed = [this, channelConfiguration]()
+        {
+            qDebug() << "widgetPressed " << channelConfiguration->channelUuid;
+
+            auto setSpectrumIndex = [ channelConfiguration ]( int index )
+            {
+                qDebug() << channelConfiguration->channelUuid << "  index:" << index;
+                channelConfiguration->setSpectrumIndex( index );
+            };
+
+            m_spectrumSpectrumIndexSelectedConnection = std::shared_ptr<QMetaObject::Connection>(
+                        new QMetaObject::Connection( connect( m_spectrograph, &Spectrograph::selectedBarChanged, setSpectrumIndex) ),
+                        [](QMetaObject::Connection* con){ disconnect(*con); delete con; } );
+
+            if ( channelConfiguration->isSpectrumIndexSet() )
+            {
+                m_spectrograph->setBarSelected( *(channelConfiguration->spectrumIndex) );
+            }
+            else
+            {
+                m_spectrograph->setBarSelected( Spectrograph::NullIndex );
+            }
+
+            if ( channelConfiguration->isGainSet() )
+            {
+                m_spectrograph->setGain( *(channelConfiguration->gain) );
+            }
+            else
+            {
+                m_spectrograph->setGain( Spectrograph::NoGain );
+            }
+
+            m_spectrograph->setMinimumLevel( channelConfiguration->minimumLevel );
+            m_spectrograph->setFading( channelConfiguration->fading );
+        };
+
+        auto label = new QLabelEx( channel.label );
+        connect( label, &QLabelEx::clicked, widgetPressed );
+
+        ui->tableWidget_2->setCellWidget( i, 0, label );
+
+        auto gainSlider = new QSliderEx( Qt::Horizontal );
         gainSlider->setMaximum( 100 );
         gainSlider->setMinimum( 0 );
-        auto channelConfiguration = sequense->getConfiguration( channel.uuid );
         if ( channelConfiguration->isGainSet())
         {
             gainSlider->setValue( 10.0 * (*channelConfiguration->gain) );
@@ -237,34 +289,40 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
         {
             gainSlider->setValue( channel.multipler * 10.0 );
         }
-        connect(gainSlider, &QSlider::valueChanged, [channelConfiguration]( int value ){
+        connect(gainSlider, &QSliderEx::valueChanged, [channelConfiguration, this]( int value ){
             channelConfiguration->setGain( double(value)/10 );
+            m_spectrograph->setGain( *(channelConfiguration->gain) );
         });
+        connect(gainSlider, &QSliderEx::clicked, widgetPressed );
 
         ui->tableWidget_2->setCellWidget( i, 1, gainSlider );
 
 
-        auto threshHold = new QSlider( Qt::Horizontal );
+        auto threshHold = new QSliderEx( Qt::Horizontal );
         threshHold->setMaximum( 100 );
         threshHold->setMinimum( 0 );
 
         threshHold->setValue( 100.0 * (channelConfiguration->minimumLevel) );
 
-        connect(threshHold, &QSlider::valueChanged, [channelConfiguration]( int value ){
+        connect(threshHold, &QSliderEx::valueChanged, [channelConfiguration, this]( int value ){
             channelConfiguration->minimumLevel =  double(value)/100.0;
+            m_spectrograph->setMinimumLevel( channelConfiguration->minimumLevel );
         });
+        connect(threshHold, &QSliderEx::clicked, widgetPressed );
 
         ui->tableWidget_2->setCellWidget( i, 2, threshHold );
 
-        auto fading = new QSlider( Qt::Horizontal );
+        auto fading = new QSliderEx( Qt::Horizontal );
         fading->setMaximum( 100 );
         fading->setMinimum( 0 );
 
         fading->setValue( 10.0 * (channelConfiguration->fading ) );
 
-        connect(fading, &QSlider::valueChanged, [channelConfiguration]( int value ){
+        connect(fading, &QSliderEx::valueChanged, [channelConfiguration, this]( int value ){
             channelConfiguration->fading =  double(value)/10.0;
+            m_spectrograph->setFading( channelConfiguration->fading );
         });
+        connect(fading, &QSliderEx::clicked, widgetPressed );
 
         ui->tableWidget_2->setCellWidget( i, 3, fading );
 
@@ -272,7 +330,7 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
 
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
+void MainWindow::closeEvent(QCloseEvent *)
 {
    qDebug() << __FUNCTION__;
    persist();
@@ -342,7 +400,9 @@ void MainWindow::adjustSequense( std::shared_ptr<CLightSequence> &seq )
 {
     if ( seq )
     {
-        connect( seq.get(), &CLightSequence::deleteTriggered, this, &MainWindow::sequenseDeleted);
-        connect( seq.get(), &CLightSequence::playStarted, this, &MainWindow::sequensePlayStarted );
+        connect( seq.get(), &CLightSequence::deleteTriggered, this, &MainWindow::sequenseDeleted     );
+        connect( seq.get(), &CLightSequence::playStarted,     this, &MainWindow::sequensePlayStarted );
     }
 }
+
+

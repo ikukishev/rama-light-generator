@@ -54,13 +54,14 @@
 #include <QPainter>
 #include <QTimerEvent>
 
-const int NullTimerId = -1;
-const int NullIndex = -1;
-const int BarSelectionInterval = 2000;
+
 
 Spectrograph::Spectrograph(QWidget *parent)
-    :   QWidget(parent)
-    ,   m_timerId(NullTimerId)
+    : QWidget(parent)
+    , m_barSelected( NullIndex )
+    , m_gain( NoGain )
+    , m_minimumLevel( NoMinimumLevel )
+    , m_fading( NoFade )
 {
     setMinimumHeight(100);
 }
@@ -84,10 +85,42 @@ void Spectrograph::paintEvent(QPaintEvent *event)
         QRect regionRect = rect();
         regionRect.setLeft(m_barSelected * rect().width() / numBars);
         regionRect.setWidth(rect().width() / numBars);
-        QColor regionColor(202, 202, 64);
         painter.setBrush(Qt::DiagCrossPattern);
-        painter.fillRect(regionRect, regionColor);
+        painter.fillRect(regionRect, QColor(202, 202, 64));
+
+
+
+        auto dt = m_spectrum.position - m_prev_position;
+        auto k = (-1.0 / (1000.0 * m_fading));
+        auto b = 1.0;
+        double y = k * double(dt) + b;
+        double heightReduction = b - y;
+
+        m_current_value -= heightReduction;
+
+
+        qreal value = m_spectrum.spectrum[m_barSelected] * m_gain;
+
+        if ( value > m_current_value )
+        {
+            m_current_value = value;
+        }
+
+        regionRect.setTop( (1.0-m_current_value)*regionRect.height() );
+
+        if ( m_current_value < m_minimumLevel )
+        {
+            painter.fillRect(regionRect, QColor(0, 0, 150, 150));
+        }
+        else
+        {
+            painter.fillRect(regionRect, QColorConstants::Magenta);
+        }
+
+
         painter.setBrush(Qt::NoBrush);
+
+        m_prev_position = m_spectrum.position;
     }
 
     QColor barColor(51, 204, 102);
@@ -142,8 +175,12 @@ void Spectrograph::paintEvent(QPaintEvent *event)
         const double barHeight = rect().height() - 2 * gapWidth;
 
         for (int i=0; i<numBars; ++i) {
-            const qreal value = m_spectrum.spectrum[i];
-            Q_ASSERT(value >= 0.0 && value <= 1.0);
+            qreal value = m_spectrum.spectrum[i];
+            if ( value < 0.0 )
+                continue;
+            if ( value > 1.0 )
+                value = 1.0;
+
             QRect bar = rect();
             bar.setLeft( qRound(rect().left() + leftPaddingWidth + (i * (gapWidth + barWidth))));
             bar.setWidth( qRound(barWidth) );
@@ -155,6 +192,14 @@ void Spectrograph::paintEvent(QPaintEvent *event)
             painter.fillRect(bar, color);
         }
     }
+
+    QPen pen( QColorConstants::Red );
+    pen.setWidth( 2 );
+    painter.setPen( pen );
+
+    int y = rect().height()*(1.0-m_minimumLevel);
+    painter.drawLine(0, y, rect().width(), y);
+
 }
 
 void Spectrograph::mousePressEvent(QMouseEvent *event)
@@ -162,6 +207,14 @@ void Spectrograph::mousePressEvent(QMouseEvent *event)
     const QPoint pos = event->pos();
     const int index = m_spectrum.spectrum.size() * (pos.x() - rect().left()) / rect().width();
     selectBar(index);
+}
+
+void Spectrograph::setFading(double fadeDuration)
+{
+    if ( fadeDuration < NoFade)
+        m_fading = NoFade;
+    else
+        m_fading = fadeDuration;
 }
 
 void Spectrograph::reset()
@@ -178,7 +231,7 @@ void Spectrograph::spectrumChanged(const SpectrumData &spectrum)
 
 void Spectrograph::selectBar(int index)
 {
-    emit infoMessage(index);
+    emit selectedBarChanged(index);
 
     m_barSelected = index;
     update();

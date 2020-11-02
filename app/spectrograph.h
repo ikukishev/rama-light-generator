@@ -10,9 +10,18 @@
  * Widget which displays a spectrograph showing the frequency spectrum
  * of the window of audio samples most recently analyzed by the Engine.
  */
+
+
+
+
 class Spectrograph : public QWidget
 {
     Q_OBJECT
+public:
+    static constexpr int NullIndex = -1;
+    static constexpr double NoGain = 1.0;
+    static constexpr double NoMinimumLevel = 0.0;
+    static constexpr double NoFade = 0.01;
 
 public:
     explicit Spectrograph(QWidget *parent = 0);
@@ -24,8 +33,13 @@ public:
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
 
+    void setBarSelected( int index) { m_barSelected = index; };
+    void setGain( double gain ) { m_gain = gain; }
+    void setMinimumLevel( double level ) { m_minimumLevel = level; }
+    void setFading( double fadeDuration );
+
 signals:
-    void infoMessage(int index);
+    void selectedBarChanged(int index);
 
 public slots:
     void reset();
@@ -37,8 +51,13 @@ private:
 private:
 
     int                 m_barSelected;
-    int                 m_timerId;
-    SpectrumData   m_spectrum;
+    SpectrumData        m_spectrum;
+    double              m_gain;
+    double              m_minimumLevel;
+    double              m_fading;
+
+    uint64_t            m_prev_position = 0;
+    float               m_current_value = 0.0f;
 };
 
 #endif // SPECTROGRAPH_H

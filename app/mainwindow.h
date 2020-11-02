@@ -11,6 +11,53 @@ namespace Ui {
 class MainWindow;
 }
 
+
+
+class QLabelEx : public QLabel
+{
+    Q_OBJECT
+public:
+    explicit QLabelEx(QWidget *parent=nullptr, Qt::WindowFlags f=Qt::WindowFlags())
+        : QLabel( parent, f )
+    {}
+    explicit QLabelEx(const QString &text, QWidget *parent=nullptr, Qt::WindowFlags f=Qt::WindowFlags())
+        : QLabel( text, parent, f )
+    {}
+
+signals:
+    void clicked();
+
+protected:
+
+    virtual void mousePressEvent(QMouseEvent* event) override;
+
+};
+
+
+
+class QSliderEx : public QSlider
+{
+    Q_OBJECT
+public:
+    explicit QSliderEx(QWidget *parent = nullptr)
+        : QSlider( parent )
+    {}
+
+    explicit QSliderEx(Qt::Orientation orientation, QWidget *parent = nullptr)
+        : QSlider( orientation, parent )
+    {}
+
+signals:
+    void clicked();
+
+protected:
+
+    virtual void mousePressEvent(QMouseEvent* event) override;
+
+};
+
+
+
 class MainWindow : public QMainWindow
                  , public CConfigation
 {
@@ -54,7 +101,7 @@ private:
 
 protected:
 
-    virtual void closeEvent(QCloseEvent *event) override;
+    virtual void closeEvent(QCloseEvent *) override;
 
 private:
     Ui::MainWindow *ui;
@@ -62,6 +109,7 @@ private:
     ChannelConfigurator*            m_channelConfigurator;
     std::vector<std::shared_ptr<CLightSequence>> m_sequences;
     std::shared_ptr<QMetaObject::Connection> m_spectrumConnection;
+    std::shared_ptr<QMetaObject::Connection> m_spectrumSpectrumIndexSelectedConnection;
     std::weak_ptr<CLightSequence> m_current;
 
 
