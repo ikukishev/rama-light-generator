@@ -254,7 +254,7 @@ protected:
             append_attribute( "type" ) = "freeform";
             append_attribute( "saveID" ) = 0;
 
-            appendChild<CTiming>( 1ul );
+            appendChild<CTiming>( uint64_t(1) );
 
             auto& spData = sequense->getAudioFile()->getSpectrum();
             for ( auto& spectrum : spData )
