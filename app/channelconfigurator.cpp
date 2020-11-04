@@ -14,21 +14,27 @@
 const std::string configuration("channelConfiguration.json");
 
 // JSON keys
-const QString &cKeyChannels( "channels" );
-const QString &cKeyLabel( "label" );
-const QString &cKeyUnit( "Unit" );
-const QString &cKeyChannel( "Channel" );
-const QString &cKeyVoltage( "Voltage" );
-const QString &cKeySpectrumBarIndex( "SpectrumBarIndex" );
-const QString &cKeyMultipler( "Multipler" );
-const QString &cKeyColor( "Color" );
-const QString &cKeyUUID( "uuid" );
+const QString cKeyChannels( "channels" );
+const QString cKeyLabel( "label" );
+const QString cKeyUnit( "Unit" );
+const QString cKeyChannel( "Channel" );
+const QString cKeyVoltage( "Voltage" );
+const QString cKeySpectrumBarIndex( "SpectrumBarIndex" );
+const QString cKeyMultipler( "Multipler" );
+const QString cKeyColor( "Color" );
+const QString cKeyUUID( "uuid" );
+const QString cKeyPortName( "commPortName" );
+const QString cKeyPortBaudRate( "commPortBaudRate" );
+
+const uint32_t cDefaultBaudRate( 115200 );
 
 
 
 ChannelConfigurator::ChannelConfigurator(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::ChannelConfigurator)
+    , m_commPortName()
+    , m_baudRate( cDefaultBaudRate )
 {
    ui->setupUi(this);
     connect(ui->tableWidget, &QTableWidget::customContextMenuRequested, this, &ChannelConfigurator::on_tableWidget_customContextMenuRequested);
@@ -220,6 +226,24 @@ void ChannelConfigurator::load()
 
         }
 
+        if ( json.contains( cKeyPortName ) )
+        {
+            if ( !json[ cKeyPortName ].isString() )
+            {
+                qWarning() << "Channel '" << cKeyPortName << "' is wrong";
+            }
+            else
+            {
+                m_commPortName = json[ cKeyPortName ].toString();
+            }
+        }
+
+        if ( json.contains( cKeyPortBaudRate ) )
+        {
+            m_baudRate = json[ cKeyPortBaudRate ].toInt( cDefaultBaudRate );
+        }
+
+
         if ( !isSchemaValid )
         {
             QMessageBox::warning( this, "Warning", QString("Invalid configuration file schema: ") + configuration.c_str() );
@@ -258,10 +282,12 @@ void ChannelConfigurator::persist()
         jsonChannelsArray.append(jsonObject);
     }
 
-    QJsonObject jsonObjectChannels;
-    jsonObjectChannels[ cKeyChannels ] = jsonChannelsArray;
+    QJsonObject jsonObject;
+    jsonObject[ cKeyPortName ] = m_commPortName;
+    jsonObject[ cKeyPortBaudRate ] = static_cast<int>(m_baudRate);
+    jsonObject[ cKeyChannels ] = jsonChannelsArray;
 
-    persistFile.write( QJsonDocument(jsonObjectChannels).toJson() );
+    persistFile.write( QJsonDocument(jsonObject).toJson() );
 
 }
 
@@ -304,6 +330,9 @@ void ChannelConfigurator::updateTableData()
         ui->tableWidget->setCellWidget( rowIndex, 7, prepareUUIDLabel( m_channels[rowIndex].uuid ) );
 
     }
+
+    ui->commBaudrate->setText( QString::number( m_baudRate ) );
+    ui->commPortNameEdit->setText( m_commPortName );
 }
 
 void ChannelConfigurator::updateChannelsValue()
@@ -437,6 +466,14 @@ void ChannelConfigurator::updateChannelsValue()
     }
 
     m_channels = std::move(channelsTmp);
+
+    m_commPortName = ui->commPortNameEdit->text();
+    bool isSucess = true;
+    m_baudRate = ui->commBaudrate->text().toInt(&isSucess);
+    if ( !isSucess )
+    {
+        m_baudRate = cDefaultBaudRate;
+    }
 
 }
 

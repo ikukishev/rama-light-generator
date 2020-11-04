@@ -46,6 +46,8 @@ private slots:
 private:
     Ui::ChannelConfigurator *ui;
     std::vector<Channel> m_channels;
+    QString   m_commPortName;
+    uint32_t  m_baudRate;
 };
 
 #endif // CHANNELCONFIGURATOR_H
