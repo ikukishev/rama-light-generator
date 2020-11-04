@@ -1,0 +1,226 @@
+Protocol:
+
+Period for 
+Write byte sequense to port:
+ 00 FF 81 56 00                                    .яЃV.
+
+ 
+ set intensity to 100% on 4 channel of 1st unit (on)
+ 00026138	2020-11-04 12:42:25,5295916	+0,0000036	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 01 83 00 	......
+
+  set intensity to 0% on 8 channel of 1st unit (off)
+ 00029590	2020-11-04 12:43:48,1776285	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 f0 87 00 	......
+
+ 
+  set intensity to 50% on 8 channel of 1st unit (on)
+ 00035932	2020-11-04 12:46:19,0176304	+0,0000038	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 80 87 00 	......
+
+   set intensity to 0% on 1 channel of 1st unit (off)
+ 00044712	2020-11-04 12:49:50,3217994	+0,0000036	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 f0 80 00 	......
+
+ 
+set intensity to 0% on 2 channel of 1st unit (off) 
+ 00046628	2020-11-04 12:50:35,3614861	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 f0 81 00 	......
+
+ 
+=====================================================================================================================================
+Intensity level       byte                                                             ?? Unit Com V Chan ??
+=====================================================================================================================================
+ 
+set intensity to 0% on 3 channel of 1st unit (off) 
+ 00051104	2020-11-04 12:52:22,6574050	+0,0000033	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 f0 82 00 	......       ДЕК 240
+
+set intensity to 1% on 3 channel of 1st unit (on)
+00197324	2020-11-04 13:48:45,8805867	+0,0000034	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 82 00 	......       ДЕК 226
+
+set intensity to 1% on 3 channel of 2st unit (on)
+00404070	2020-11-04 15:10:43,6152594	+0,0000043	IRP_MJ_WRITE	DOWN	0x00000000	00 02 03 e2 82 00 	......       ДЕК 226
+
+
+set intensity to 2% on 3 channel of 1st unit (on)
+00189578	2020-11-04 13:45:41,5207266	+0,0000033	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e0 82 00 	......       ДЕК 224
+
+set intensity to 3% on 3 channel of 1st unit (on)
+00186922	2020-11-04 13:44:38,5210214	+0,0000037	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 de 82 00 	......       ДЕК 222
+
+set intensity to 4% on 3 channel of 1st unit (on)
+00094282	2020-11-04 13:08:48,9851975	+0,0000037	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 dc 82 00 	......       ДЕК 220
+
+set intensity to 5% on 3 channel of 1st unit (on)
+00180064	2020-11-04 13:41:55,0725547	+0,0000032	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 da 82 00 	......       ДЕК 218
+
+set intensity to 8% on 3 channel of 1st unit (on)
+00087920	2020-11-04 13:06:16,8653047	+0,0000038	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 d4 82 00 	......       ДЕК 212
+
+set intensity to 10% on 3 channel of 1st unit (on)
+00177506	2020-11-04 13:40:56,0646217	+0,0000038	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 d0 82 00 	......       ДЕК 208
+
+set intensity to 15% on 3 channel of 1st unit (on)
+00174706	2020-11-04 13:39:53,0966514	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 c6 82 00 	......       ДЕК 198
+
+set intensity to 20% on 3 channel of 1st unit (on)
+00171778	2020-11-04 13:38:45,8650758	+0,0000037	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 bc 82 00 	......       ДЕК 188
+
+set intensity to 25% on 3 channel of 1st unit (on)
+00063166	2020-11-04 12:56:30,5854047	+0,0000041	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 b2 82 00 	......       ДЕК 178
+
+set intensity to 30% on 3 channel of 1st unit (on)
+00165602	2020-11-04 13:36:26,2250192	+0,0000038	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 a8 82 00 	......       ДЕК 168
+
+set intensity to 35% on 3 channel of 1st unit (on)
+00163436	2020-11-04 13:35:36,9366529	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 9e 82 00 	......       ДЕК 158
+
+set intensity to 40% on 3 channel of 1st unit (on)
+00161258	2020-11-04 13:34:46,9209918	+0,0000038	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 94 82 00 	......       ДЕК 148
+
+set intensity to 45% on 3 channel of 1st unit (on)
+00157864	2020-11-04 13:33:29,3288779	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 8a 82 00 	......       ДЕК 138
+
+set intensity to 50% on 3 channel of 1st unit (on)
+00155444	2020-11-04 13:32:33,4806636	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 80 82 00 	......       ДЕК 128
+
+set intensity to 55% on 3 channel of 1st unit (on)
+00150774	2020-11-04 13:30:43,6248807	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 76 82 00 	...v..       ДЕК 118
+
+set intensity to 60% on 3 channel of 1st unit (on)
+00146704	2020-11-04 13:29:06,4968576	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 6c 82 00 	...l..       ДЕК 108
+
+set intensity to 65% on 3 channel of 1st unit (on)
+00142906	2020-11-04 13:27:38,6807371	+0,0000042	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 62 82 00 	...b..       ДЕК 98
+
+set intensity to 70% on 3 channel of 1st unit (on)
+00139512	2020-11-04 13:26:17,9288427	+0,0000212	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 58 82 00 	...X..       ДЕК 88
+
+set intensity to 75% on 3 channel of 1st unit (on)
+00135902	2020-11-04 13:24:54,9774481	+0,0000037	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 4e 82 00 	...N..       ДЕК 78
+
+set intensity to 80% on 3 channel of 1st unit (on)
+00131246	2020-11-04 13:23:04,2092727	+0,0000038	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 44 82 00 	...D..       ДЕК 68
+
+set intensity to 85% on 3 channel of 1st unit (on)
+00111562	2020-11-04 13:15:31,0810132	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 3a 82 00 	...:..       ДЕК 58
+
+set intensity to 90% on 3 channel of 1st unit (on)
+00096534	2020-11-04 13:09:41,8655590	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 30 82 00 	...0..       ДЕК 48
+
+set intensity to 96% on 3 channel of 1st unit (on)
+00126648	2020-11-04 13:21:23,0499698	+0,0000037	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 24 82 00 	...$..       ДЕК 36
+
+set intensity to 97% on 3 channel of 1st unit (on)
+00106928	2020-11-04 13:13:41,1691031	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 22 82 00 	..."..       ДЕК 34
+
+set intensity to 98% on 3 channel of 1st unit (on)
+00120434	2020-11-04 13:18:56,7530977	+0,0000038	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 20 82 00 	... ..       ДЕК 32
+
+set intensity to 99% on 3 channel of 1st unit (on)
+00101678	2020-11-04 13:11:37,9379179	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 1e 82 00 	......       ДЕК 30
+
+set intensity to 100% on 3 channel of 1st unit (on)
+00056494	2020-11-04 12:54:22,8734523	+0,0000043	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 01 82 00 	......       ДЕК 01 
+
+
+
+
+
+
+
+=====================================================================================================================================
+Channel byte                                                                            ?? ?? Com V Chan ??
+=====================================================================================================================================
+ 
+set intensity to 1% on 1 channel of 1st unit (on)
+00220560	2020-11-04 13:58:00,6083674	+0,0000044	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 80 00 	......
+
+set intensity to 1% on 2 channel of 1st unit (on)
+00222650	2020-11-04 13:58:49,9129191	+0,0000042	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 81 00 	......
+
+set intensity to 1% on 3 channel of 1st unit (on)
+00226524	2020-11-04 14:00:23,4483127	+0,0000043	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 82 00 	......
+
+set intensity to 1% on 4 channel of 1st unit (on)
+00227956	2020-11-04 14:00:56,8963950	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 83 00 	......
+
+set intensity to 1% on 5 channel of 1st unit (on)
+00228918	2020-11-04 14:01:19,3764179	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 84 00 	......
+
+set intensity to 1% on 6 channel of 1st unit (on)
+00229988	2020-11-04 14:01:44,7363316	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 85 00 	......
+
+set intensity to 1% on 7 channel of 1st unit (on)
+00231064	2020-11-04 14:02:10,5445292	+0,0000046	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 86 00 	......
+
+set intensity to 1% on 8 channel of 1st unit (on)
+00232588	2020-11-04 14:02:45,8645076	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 87 00 	......
+
+set intensity to 1% on 9 channel of 1st unit (on)
+00233518	2020-11-04 14:03:07,8562778	+0,0000051	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 88 00 	......
+
+set intensity to 1% on 10 channel of 1st unit (on)
+00234698	2020-11-04 14:03:35,5605408	+0,0000045	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 89 00 	......
+
+set intensity to 1% on 11 channel of 1st unit (on)
+00235856	2020-11-04 14:04:03,3215782	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 8a 00 	......
+
+set intensity to 1% on 12 channel of 1st unit (on)
+00236936	2020-11-04 14:04:28,5202420	+0,0000042	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 8b 00 	......
+
+set intensity to 1% on 13 channel of 1st unit (on)
+00238168	2020-11-04 14:04:56,7281975	+0,0000044	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 8c 00 	......
+
+set intensity to 1% on 14 channel of 1st unit (on)
+00239608	2020-11-04 14:05:30,1617590	+0,0000045	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 8d 00 	......
+
+set intensity to 1% on 15 channel of 1st unit (on)
+00240736	2020-11-04 14:05:56,8002189	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 8e 00 	......
+
+set intensity to 1% on 16 channel of 1st unit (on)
+00241912	2020-11-04 14:06:24,8723613	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 03 e2 8f 00 	......
+set intensity to 1% on 16 channel of 2st unit (on)
+00415604	2020-11-04 15:15:20,9992109	+0,0000041	IRP_MJ_WRITE	DOWN	0x00000000	00 02 03 e2 8f 00 	......
+
+
+=====================================================================================================================================
+Command byte                                                                            ?? ?? Com V Chan ??
+=====================================================================================================================================
+03 - Intensity
+06 - Twinkle
+07 - Shimmer
+
+
+
+
+
+
+
+=====================================================================================================================================
+Shimmer level       byte                                                             ?? Unit Com ?? Chan ?? v  ??
+=====================================================================================================================================
+set intensity to 0% on 1 channel of 1st unit (on)
+00428040	2020-11-04 15:20:07,9991909	+0,0000040	IRP_MJ_WRITE	DOWN	0x00000000	00 01 07 80 81 03 f0 00 	........
+set intensity to 1% on 1 channel of 1st unit (on)
+00430634	2020-11-04 15:21:08,8069117	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 07 80 81 03 e2 00 	........
+
+set intensity to 1% on 1 channel of 2st unit (on)
+00433306	2020-11-04 15:22:11,9351499	+0,0000041	IRP_MJ_WRITE	DOWN	0x00000000	00 02 07 80 81 03 e2 00 	........
+set intensity to 99% on 1 channel of 2st unit (on)
+00437030	2020-11-04 15:23:19,0312424	+0,0000197	IRP_MJ_WRITE	DOWN	0x00000000	00 02 07 80 81 03 1e 00 	........
+
+set intensity to 99% on 1 channel of 1st unit (on)
+00438942	2020-11-04 15:24:04,7673037	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 07 80 81 03 1e 00 	........
+
+
+
+
+
+set intensity to 100% on 1 channel of 1st unit (on)
+00442660	2020-11-04 15:25:32,0630451	+0,0000039	IRP_MJ_WRITE	DOWN	0x00000000	00 01 07 80 00 	.....
+
+set intensity to 100% on 1 channel of 2st unit (on)
+00450976	2020-11-04 15:28:49,5111230	+0,0000038	IRP_MJ_WRITE	DOWN	0x00000000	00 02 07 80 00 	.....
+
+
+=====================================================================================================================================
+Twinkle level       byte                                                             ?? Unit Com ?? Chan ?? v  ??
+=====================================================================================================================================
+00522226	2020-11-04 15:57:18,3034378	+0,0000053	IRP_MJ_WRITE	DOWN	0x00000000	00 02 06 81 81 03 34 00 	......4.
+00524296	2020-11-04 15:58:01,0466624	+0,0000045	IRP_MJ_WRITE	DOWN	0x00000000	00 02 06 82 81 03 52 00 	......R.
