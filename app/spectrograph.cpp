@@ -104,6 +104,10 @@ void Spectrograph::paintEvent(QPaintEvent *event)
         if ( value > m_current_value )
         {
             m_current_value = value;
+            if ( m_current_value > 1.0 )
+            {
+                m_current_value = 1.0;
+            }
         }
 
         regionRect.setTop( (1.0-m_current_value)*regionRect.height() );

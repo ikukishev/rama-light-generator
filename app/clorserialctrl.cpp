@@ -70,6 +70,7 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                 if ( currentSpectrum->position > spectrum.position || currentSpectrum->spectrum.size() != spectrum.spectrum.size() )
                 {
                     *currentSpectrum = spectrum;
+
                 }
 
                 auto dt = spectrum.position - currentSpectrum->position;
@@ -88,25 +89,39 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                     auto gain = channel.multipler;
                     if ( localConfiguration->isGainSet() )
                     {
-                        spectrumIndex = *(localConfiguration->gain);
+                        gain = *(localConfiguration->gain);
                     }
 
-                    auto k = (-1.0 / (1000.0 * (localConfiguration->fading < 0.1 ? 0.1 : localConfiguration->fading)));
+                    auto k = (-1.0 / (1000.0 * ( localConfiguration->fading < 0.1 ? 0.1 : localConfiguration->fading )));
                     auto b = 1.0;
                     double y = k * double(dt) + b;
                     double intensityReduction = b - y;
 
+
+
                     currentSpectrum->spectrum[ spectrumIndex ] -= intensityReduction;
                     auto value = spectrum.spectrum[ spectrumIndex ] * gain;
 
+
                     if ( value > currentSpectrum->spectrum[ spectrumIndex ] )
                     {
-                        currentSpectrum->spectrum[ spectrumIndex ] = value;
+                        if ( value > 1.0 )
+                        {
+                            currentSpectrum->spectrum[ spectrumIndex ] = 1.0;
+                        }
+                        else if ( value > localConfiguration->minimumLevel )
+                        {
+                            currentSpectrum->spectrum[ spectrumIndex ] = value;
+                        }
                     }
+
+                    qDebug() << channel.label << "reduction:" << intensityReduction << "Intensity:" << currentSpectrum->spectrum[ spectrumIndex ];
 
                     setIntensity( channel, currentSpectrum->spectrum[ spectrumIndex ] );
 
                 }
+
+                currentSpectrum->position = spectrum.position;
             }
         };
 
