@@ -662,4 +662,14 @@ void ChannelConfigurator::on_buttonBox_clicked(QAbstractButton *button)
     }
 }
 
+uint32_t ChannelConfigurator::baudRate() const
+{
+    return m_baudRate;
+}
+
+const QString &ChannelConfigurator::commPortName() const
+{
+    return m_commPortName;
+}
+
 

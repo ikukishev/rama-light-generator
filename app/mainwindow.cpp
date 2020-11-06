@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_channelConfigurator( new ChannelConfigurator( this ) )
     , m_spectrumConnection( nullptr )
     , m_current(  )
+    , m_lorCtrl( new CLORSerialCtrl( this ) )
 {
     ui->setupUi(this);
     QHeaderView * header = ui->tableWidget->horizontalHeader();
@@ -51,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->horizontalLayout_3->addWidget(m_spectrograph);
     m_spectrograph->show();
     load();
+    m_lorCtrl->setPortParams( m_channelConfigurator->commPortName(), m_channelConfigurator->baudRate() );
 }
 
 MainWindow::~MainWindow()
@@ -223,6 +225,7 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
     }
 
     m_current = thisObject;
+    m_lorCtrl->playStarted( thisObject );
 
     qDebug() << __FUNCTION__ << sequense->getFileName().c_str();
 
@@ -394,6 +397,7 @@ void MainWindow::channelConfigurationChanged()
       channel->channelConfigurationUpdated();
    }
    sequensePlayStarted( m_current );
+   m_lorCtrl->setPortParams( m_channelConfigurator->commPortName(), m_channelConfigurator->baudRate() );
 }
 
 void MainWindow::adjustSequense( std::shared_ptr<CLightSequence> &seq )

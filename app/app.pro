@@ -2,11 +2,12 @@ TEMPLATE = app
 
 TARGET = spectrum
 
-QT       += widgets
+QT       += widgets serialport
 
 SOURCES  += channelconfigurator.cpp \
             CConfiguration.cpp \
             clightsequence.cpp \
+            clorserialctrl.cpp \
             csequensegenerator.cpp \
             main.cpp \
             mainwindow.cpp \
@@ -16,6 +17,7 @@ SOURCES  += channelconfigurator.cpp \
 HEADERS  += channelconfigurator.h \
             CConfiguration.h \
             clightsequence.h \
+            clorserialctrl.h \
             csequensegenerator.h \
             mainwindow.h \
             qbassaudiofile.h \

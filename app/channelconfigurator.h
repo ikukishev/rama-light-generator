@@ -24,6 +24,10 @@ public:
     DialogCode display();
     const std::vector<Channel>& channels() const { return m_channels; };
 
+    const QString& commPortName() const;
+
+    uint32_t baudRate() const;
+
 private slots:
 
     void load();

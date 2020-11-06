@@ -6,6 +6,7 @@
 #include "channelconfigurator.h"
 #include "CConfiguration.h"
 #include "clightsequence.h"
+#include "clorserialctrl.h"
 
 namespace Ui {
 class MainWindow;
@@ -110,7 +111,8 @@ private:
     std::vector<std::shared_ptr<CLightSequence>> m_sequences;
     std::shared_ptr<QMetaObject::Connection> m_spectrumConnection;
     std::shared_ptr<QMetaObject::Connection> m_spectrumSpectrumIndexSelectedConnection;
-    std::weak_ptr<CLightSequence> m_current;
+    std::weak_ptr<CLightSequence>  m_current;
+    CLORSerialCtrl*                m_lorCtrl;
 
 
 };
