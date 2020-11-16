@@ -9,6 +9,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLabel>
+#include <QScreen>
 
 
 const QString cSequenseConfigurationFileName( "sequenseConfiguration.json" );
@@ -29,7 +30,7 @@ void QSliderEx::mousePressEvent(QMouseEvent *event)
     QSlider::mousePressEvent(event);
 }
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow( QWidget *parent )
     : QMainWindow( parent )
     , ui( new Ui::MainWindow )
     , m_spectrograph( nullptr )
@@ -37,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_spectrumConnection( nullptr )
     , m_current(  )
     , m_lorCtrl( new CLORSerialCtrl( this ) )
+    , m_effectConfiguration( new CEffectEditorWidget( ) )
 {
     ui->setupUi(this);
     QHeaderView * header = ui->tableWidget->horizontalHeader();
@@ -53,10 +55,40 @@ MainWindow::MainWindow(QWidget *parent)
     m_spectrograph->show();
     load();
     m_lorCtrl->setPortParams( m_channelConfigurator->commPortName(), m_channelConfigurator->baudRate() );
+
+    QScreen * primaryScreen = QGuiApplication::primaryScreen();
+    QScreen * secondaryScreen = nullptr;
+    auto scList = QGuiApplication::screens();
+    if ( scList.size() > 1)
+    {
+       for ( auto screen : scList )
+       {
+          if ( screen != primaryScreen )
+          {
+             secondaryScreen = screen;
+             break;
+          }
+       }
+    }
+    else
+    {
+       secondaryScreen = primaryScreen;
+    }
+
+    move( primaryScreen->geometry().topLeft() );
+
+    setWindowState(Qt::WindowMaximized);
+    m_effectConfiguration->setWindowState( Qt::WindowMaximized );
+    m_effectConfiguration->move( secondaryScreen->geometry().topLeft() );
+    m_effectConfiguration->setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint );;
+    m_effectConfiguration->show();
+
+
 }
 
 MainWindow::~MainWindow()
 {
+   delete m_effectConfiguration;
    delete ui;
 }
 
@@ -225,6 +257,7 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
     }
 
     m_current = thisObject;
+    m_effectConfiguration->setCurrentSequense( thisObject );
     m_lorCtrl->playStarted( thisObject );
 
     qDebug() << __FUNCTION__ << sequense->getFileName().c_str();
@@ -337,6 +370,7 @@ void MainWindow::closeEvent(QCloseEvent *)
 {
    qDebug() << __FUNCTION__;
    persist();
+   m_effectConfiguration->close();
 }
 
 void MainWindow::on_actionOpen_triggered()

@@ -7,6 +7,7 @@
 #include "CConfiguration.h"
 #include "clightsequence.h"
 #include "clorserialctrl.h"
+#include "ceffecteditorwidget.h"
 
 namespace Ui {
 class MainWindow;
@@ -65,7 +66,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow( QWidget *parent = nullptr );
     ~MainWindow();
 
    virtual const std::vector<Channel> &channels() const override;
@@ -113,6 +114,7 @@ private:
     std::shared_ptr<QMetaObject::Connection> m_spectrumSpectrumIndexSelectedConnection;
     std::weak_ptr<CLightSequence>  m_current;
     CLORSerialCtrl*                m_lorCtrl;
+    CEffectEditorWidget*           m_effectConfiguration;
 
 
 };
