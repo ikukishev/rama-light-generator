@@ -14,7 +14,6 @@ QJsonObject CEffectIntensity::toJsonParameters() const
 
 bool CEffectIntensity::parseParameters(const QJsonObject &parameters)
 {
-    qDebug() << "CEffectInten::parseParameters";
     bool isOk = false;
     if ( parameters.contains( cKeyIntensityValue ) )
     {
@@ -29,13 +28,11 @@ bool CEffectIntensity::parseParameters(const QJsonObject &parameters)
 
 double CEffectIntensity::calculateIntensity(int64_t position, const std::vector<float> &fft)
 {
-    qDebug() << "CEffectIntensity::calculateIntensity" << position;
     return m_intensity;
 }
 
 QWidget *CEffectIntensity::buildWidget(QWidget *parent)
 {
-    qDebug() << "CEffectIntensity::buildWidget";
     QWidget* configWidget = new QWidget( parent );
 
     auto vlayout = new QVBoxLayout( );
