@@ -9,6 +9,8 @@
 #include <QWidget>
 #include <QDebug>
 
+constexpr int labelHeight = 15;
+
 class IEffectGenerator;
 
 class IEffectGeneratorFactory

@@ -36,12 +36,16 @@ QWidget *CEffectIntensity::buildWidget(QWidget *parent)
     QWidget* configWidget = new QWidget( parent );
 
     auto vlayout = new QVBoxLayout( );
-    vlayout->addWidget( new QLabel("Intensity: ", configWidget));
+    auto label = new QLabel("Intensity: ", configWidget);
+    label->setMaximumHeight( labelHeight );
+    vlayout->addWidget( label );
 
     QSlider * intensity = new QSlider( configWidget );
     intensity->setMaximum(100);
     intensity->setValue( m_intensity * 100 );
     intensity->setMinimum(0);
+    intensity->setOrientation( Qt::Horizontal );
+    intensity->setMaximumHeight( labelHeight );
 
     QObject::connect(intensity, &QSlider::valueChanged, [ this ]( int value ){
         m_intensity = double(value)/100.0;

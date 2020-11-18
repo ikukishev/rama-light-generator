@@ -25,6 +25,7 @@ private:
    QVBoxLayout* configurationAreaLayout = nullptr;
 
    QWidget* configurationWidget = nullptr;
+   QUuid configurationWidgetEffectUuid;
 
 
    std::list<std::shared_ptr<QMetaObject::Connection>> m_spectrumConnections;

@@ -47,6 +47,7 @@ void CEffectEditorWidget::setCurrentSequense(std::weak_ptr<CLightSequence> seque
    if ( nullptr != configurationWidget )
    {
       delete configurationWidget;
+      configurationWidget = nullptr;
    }
 
 
@@ -62,7 +63,7 @@ void CEffectEditorWidget::setCurrentSequense(std::weak_ptr<CLightSequence> seque
          timeLineChannel->setColor( channel.color );
 
 
-         connect( timeLineChannel, &CTimeLineChannel::effectAdded, [ channelConfiguration ]( ITimeLineChannel* tlChannel, IEffect* effect )
+         connect( timeLineChannel, &CTimeLineChannel::effectAdded, [ channelConfiguration ]( ITimeLineChannel*, IEffect* effect )
          {
             assert( nullptr != effect );
             if ( channelConfiguration->effects.end() == channelConfiguration->effects.find( effect->getUuid() ) )
@@ -71,27 +72,39 @@ void CEffectEditorWidget::setCurrentSequense(std::weak_ptr<CLightSequence> seque
             }
          } );
 
-         connect( timeLineChannel, &CTimeLineChannel::effectRemoved,  [ channelConfiguration ]( ITimeLineChannel* tlChannel, QUuid uuid )
+         connect( timeLineChannel, &CTimeLineChannel::effectRemoved,  [ channelConfiguration, this ]( ITimeLineChannel* tlChannel, QUuid uuid )
          {
+
             qDebug() << "effectDeleted" <<  tlChannel->label() << uuid << "items";
             auto effectIt = channelConfiguration->effects.find( uuid );
             if ( effectIt != channelConfiguration->effects.end() )
             {
                channelConfiguration->effects.erase( effectIt );
             }
+            if ( uuid == this->configurationWidgetEffectUuid )
+            {
+                if ( nullptr != configurationWidget )
+                {
+                   delete configurationWidget;
+                   configurationWidget = nullptr;
+                }
+            }
          } );
 
-         connect( timeLineChannel, &CTimeLineChannel::effectSelected, [this](  ITimeLineChannel* tlChannel, IEffect* effect )
+         auto updateWidgetConfiguration = [this](  ITimeLineChannel*, IEffect* effect )
          {
             if ( nullptr != configurationWidget )
             {
                delete configurationWidget;
+               configurationWidget = nullptr;
             }
-
             configurationWidget = effect->getEffectGenerator()->configurationWidget( configurationArea );
             configurationAreaLayout->addWidget( configurationWidget );
+            configurationWidgetEffectUuid = effect->getUuid();
+         };
 
-         } );
+         connect( timeLineChannel, &CTimeLineChannel::effectSelected, updateWidgetConfiguration );
+         connect( timeLineChannel, &CTimeLineChannel::effectChanged, updateWidgetConfiguration );
 
          for ( auto& effect :  channelConfiguration->effects )
          {

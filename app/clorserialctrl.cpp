@@ -207,7 +207,7 @@ void CLORSerialCtrl::setIntensity( const Channel& channel, double intensity )
         uint8_t channelByte = 0x80 | (0x0F & (channel.channel-1));
         auto unit = static_cast<uint8_t>(channel.unit);
 
-        qDebug() << "unit:" << channel.unit << "channel:" << channel.channel << "intensity:"<< intensity << "channelByte:" << channelByte;
+        //qDebug() << "unit:" << channel.unit << "channel:" << channel.channel << "intensity:"<< intensity << "channelByte:" << channelByte;
 
         uint8_t  intensityData[6];
         intensityData[0] = 0x00;

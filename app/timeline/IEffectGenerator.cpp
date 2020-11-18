@@ -121,17 +121,33 @@ QWidget *IEffectGenerator::configurationWidget( QWidget* parent )
 
    auto hlayout = new QHBoxLayout( );
 
-   QWidget* configWidgetLabel = new QWidget( configWidget );
+   QGroupBox* configWidgetLabel = new QGroupBox( "Base configuration", configWidget );;
    configWidgetLabel->setMaximumWidth( 300 );
 
    auto vlayout = new QVBoxLayout( );
-   vlayout->addWidget( new QLabel("Type: " + type(), configWidgetLabel));
-   vlayout->addWidget( new QLabel("Label: ", configWidgetLabel));
+   auto label = new QLabel("Type: " + type(), configWidgetLabel);
+   label->setMaximumHeight( labelHeight );
+   vlayout->addWidget( label );
+   label = new QLabel("Start position: " + QString::number((effectStartPosition()/1000)/60) + " min, "
+                      + QString::number((effectStartPosition()/1000)%60) + "." + QString::number((effectStartPosition()%1000)) + " sec"
+                      , configWidgetLabel);
+   label->setMaximumHeight( labelHeight );
+   vlayout->addWidget( label );
+   label = new QLabel("Duration: " +  QString::number((effectDuration()/1000)) + "." + QString::number((effectDuration()%1000)) + " sec", configWidgetLabel);
+   label->setMaximumHeight( labelHeight );
+   vlayout->addWidget( label );
+   label = new QLabel("Label: ", configWidgetLabel);
+   label->setMaximumHeight( labelHeight );
+
+   vlayout->addWidget( label );
    QLineEdit * labelEdit = new QLineEdit( effectNameLabel(), configWidgetLabel );
    QObject::connect(labelEdit, &QLineEdit::textChanged, [ this ](const QString & alabel){
       m_effectNameLabel = alabel;
    });
    vlayout->addWidget( labelEdit );
+
+   vlayout->addWidget( new QWidget( configWidgetLabel ) );
+
    configWidgetLabel->setLayout( vlayout );
 
    hlayout->addWidget( configWidgetLabel );
@@ -145,9 +161,13 @@ QWidget *IEffectGenerator::configurationWidget( QWidget* parent )
       vGroupLayout->addWidget( parametersGroupWidget );
    }
 
+   vGroupLayout->addWidget( new QWidget( parametersGroup ) );
+
    parametersGroup->setLayout( vGroupLayout );
 
    hlayout->addWidget( parametersGroup );
+
+
 
    configWidget->setLayout( hlayout );
 

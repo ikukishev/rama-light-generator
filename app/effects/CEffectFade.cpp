@@ -53,18 +53,24 @@ QWidget *CEffectFade::buildWidget(QWidget *parent)
 
    auto vlayout = new QVBoxLayout( );
 
-   vlayout->addWidget( new QLabel("Start intensity: ", configWidget));
+   auto label = new QLabel("Start intensity: ", configWidget);
+   //label->setMaximumHeight( labelHeight );
+   vlayout->addWidget( label );
    QSlider * startIntensity = new QSlider( configWidget );
    startIntensity->setMaximum( 100 );
    startIntensity->setMinimum( 0 );
    startIntensity->setValue( m_start_intensity*100 );
+   startIntensity->setOrientation( Qt::Horizontal );
    vlayout->addWidget( startIntensity );
 
    vlayout->addWidget( new QLabel("End intensity: ", configWidget));
    QSlider * endIntensity = new QSlider( configWidget );
    endIntensity->setMaximum(100);
    endIntensity->setMinimum(0);
+
+   //endIntensity->setMaximumHeight( labelHeight );
    endIntensity->setValue( m_end_intensity*100 );
+   endIntensity->setOrientation( Qt::Horizontal );
    vlayout->addWidget( endIntensity );
 
    QObject::connect( startIntensity, &QSlider::valueChanged, [ this ]( int value ){

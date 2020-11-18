@@ -12,6 +12,8 @@ SOURCES  += channelconfigurator.cpp \
             csequensegenerator.cpp \
             effects/CEffectFade.cpp \
             effects/CEffectIntensity.cpp \
+            effects/CEffectMaxLevel.cpp \
+            effects/CEffectSpectrumBar.cpp \
             main.cpp \
             mainwindow.cpp \
             qbassaudiofile.cpp \
@@ -32,6 +34,8 @@ HEADERS  += channelconfigurator.h \
             csequensegenerator.h \
             effects/CEffectFade.h \
             effects/CEffectIntensity.h \
+            effects/CEffectMaxLevel.h \
+            effects/CEffectSpectrumBar.h \
             mainwindow.h \
             qbassaudiofile.h \
             spectrograph.h \
