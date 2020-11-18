@@ -10,8 +10,6 @@
 #include <QJsonDocument>
 #include <QLabel>
 #include <QScreen>
-#include "effects/CEffectFade.h"
-#include "effects/CEffectIntensity.h"
 
 
 const QString cSequenseConfigurationFileName( "sequenseConfiguration.json" );
@@ -55,17 +53,6 @@ MainWindow::MainWindow( QWidget *parent )
 
     ui->horizontalLayout_3->addWidget(m_spectrograph);
     m_spectrograph->show();
-
-    auto Intensity = std::make_shared< CEffectGeneratorFactoryIntensity >();
-    IEffectGeneratorFactory::getGeneratorFactories()[ Intensity->type() ] = Intensity;
-    auto Fade = std::make_shared< CEffectGeneratorFactoryFade >();
-    IEffectGeneratorFactory::getGeneratorFactories()[ Fade->type() ] = Fade;
-
-    auto inten = std::make_shared<CEffectInten>( *Intensity.get() );;
-    inten->setEffectStartPosition(0);
-    inten->setEffectDuration(50001);
-    inten->generate(0, std::vector<float>());
-    inten->configurationWidget( nullptr) ;
 
     load();
     m_lorCtrl->setPortParams( m_channelConfigurator->commPortName(), m_channelConfigurator->baudRate() );

@@ -12,8 +12,6 @@ SOURCES  += channelconfigurator.cpp \
             csequensegenerator.cpp \
             effects/CEffectFade.cpp \
             effects/CEffectIntensity.cpp \
-            effects/CEffectTest.cpp \
-            effects/CEffectTest3.cpp \
             main.cpp \
             mainwindow.cpp \
             qbassaudiofile.cpp \
@@ -34,8 +32,6 @@ HEADERS  += channelconfigurator.h \
             csequensegenerator.h \
             effects/CEffectFade.h \
             effects/CEffectIntensity.h \
-            effects/CEffectTest.h \
-            effects/CEffectTest3.h \
             mainwindow.h \
             qbassaudiofile.h \
             spectrograph.h \
@@ -54,7 +50,7 @@ RESOURCES = fft-base/spectrum.qrc
 RESOURCES +=  ../3rdparty/qdarkstyle/style.qrc
 
 CONFIG += install_ok  # Do not cargo-cult this!
-CONFIG += c++17
+CONFIG += c++14
 
 FORMS += \
     channelconfigurator.ui \

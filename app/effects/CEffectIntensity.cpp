@@ -3,60 +3,57 @@
 const QString cKeyIntensityValue( "intensityValue" );
 
 
-
-CEffectInten::~CEffectInten()
+QJsonObject CEffectIntensity::toJsonParameters() const
 {
-   qDebug() << "CEffectInten::~CEffectInten()";
+    QJsonObject parameters;
+
+    parameters[ cKeyIntensityValue ] = m_intensity;
+
+    return parameters;
 }
 
-QJsonObject CEffectInten::toJsonParameters() const
+bool CEffectIntensity::parseParameters(const QJsonObject &parameters)
 {
-   QJsonObject parameters;
-
-   parameters[ cKeyIntensityValue ] = m_intensity;
-
-   return parameters;
+    qDebug() << "CEffectInten::parseParameters";
+    bool isOk = false;
+    if ( parameters.contains( cKeyIntensityValue ) )
+    {
+        if ( parameters[ cKeyIntensityValue ].isDouble() )
+        {
+            m_intensity = parameters[ cKeyIntensityValue ].toDouble( );
+            isOk = true;
+        }
+    }
+    return isOk;
 }
 
-bool CEffectInten::parseParameters(const QJsonObject &parameters)
+double CEffectIntensity::calculateIntensity(int64_t position, const std::vector<float> &fft)
 {
-   qDebug() << "CEffectInten::parseParameters";
-   bool isOk = false;
-   if ( parameters.contains( cKeyIntensityValue ) )
-   {
-      if ( parameters[ cKeyIntensityValue ].isDouble() )
-      {
-         m_intensity = parameters[ cKeyIntensityValue ].toDouble( );
-         isOk = true;
-      }
-   }
-   return isOk;
+    qDebug() << "CEffectIntensity::calculateIntensity" << position;
+    return m_intensity;
 }
 
-double CEffectInten::calculateIntensity(int64_t position, const std::vector<float> &fft)
+QWidget *CEffectIntensity::buildWidget(QWidget *parent)
 {
-   qDebug() << "CEffectIntensity::calculateIntensity";
-   return m_intensity;
+    qDebug() << "CEffectIntensity::buildWidget";
+    QWidget* configWidget = new QWidget( parent );
+
+    auto vlayout = new QVBoxLayout( );
+    vlayout->addWidget( new QLabel("Intensity: ", configWidget));
+
+    QSlider * intensity = new QSlider( configWidget );
+    intensity->setMaximum(100);
+    intensity->setValue( m_intensity * 100 );
+    intensity->setMinimum(0);
+
+    QObject::connect(intensity, &QSlider::valueChanged, [ this ]( int value ){
+        m_intensity = double(value)/100.0;
+    });
+
+    vlayout->addWidget( intensity );
+    configWidget->setLayout( vlayout );
+
+    return configWidget;
 }
 
-QWidget *CEffectInten::buildWidget(QWidget *parent)
-{
-   qDebug() << "CEffectIntensity::buildWidget";
-   QWidget* configWidget = new QWidget( parent );
-
-   auto vlayout = new QVBoxLayout( );
-   vlayout->addWidget( new QLabel("Intensity: ", configWidget));
-
-   QSlider * intensity = new QSlider( configWidget );
-   intensity->setMaximum(100);
-   intensity->setMinimum(0);
-
-   QObject::connect(intensity, &QSlider::valueChanged, [ this ]( int value ){
-      m_intensity = double(value)/100.0;
-   });
-
-   vlayout->addWidget( intensity );
-   configWidget->setLayout( vlayout );
-
-   return configWidget;
-}
+DECLARE_EFFECT_FACTORY( Intensity, CEffectIntensity )

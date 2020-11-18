@@ -28,24 +28,4 @@ private:
 };
 
 
-
-class CEffectGeneratorFactoryFade: public IEffectGeneratorFactory
-{
-public:
-   CEffectGeneratorFactoryFade(): IEffectGeneratorFactory( "Fade" ) {}
-
-   virtual std::shared_ptr< IEffectGenerator > create() override
-   {
-      auto ptr = std::make_shared<CEffectFade>( *this );
-      qDebug() << "create" << type() << "ptr:" << (void*)ptr.get();
-      return ptr;
-   }
-
-   virtual std::shared_ptr< IEffectGenerator > create( const QUuid& uuid ) override
-   {
-      return std::make_shared<CEffectFade>( *this, uuid );
-   }
-};
-
-
 #endif // CEFFECTFADEUP

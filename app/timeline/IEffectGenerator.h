@@ -88,10 +88,10 @@ private:
    class CEffectGeneratorFactory##effectName: public IEffectGeneratorFactory { \
    public: \
       CEffectGeneratorFactory##effectName(): IEffectGeneratorFactory( #effectName ) {}\
-      virtual std::shared_ptr< IEffectGenerator > create() override { auto ptr = std::make_shared<className>( *this ); qDebug() << "create" << type() << "ptr:" << (void*)ptr.get(); return ptr; } \
+      virtual std::shared_ptr< IEffectGenerator > create() override { return std::make_shared<className>( *this ); } \
       virtual std::shared_ptr< IEffectGenerator > create( const QUuid& uuid ) override { return std::make_shared<className>( *this, uuid ); } \
    };\
-   static CEffectGeneratorFactory##effectName s_factory_##effectName;
+    static bool s_factory_##effectName = [](){ IEffectGeneratorFactory::getGeneratorFactories()[ #effectName ] = std::make_shared< CEffectGeneratorFactory##effectName >(); return true; }();
 
 
 #endif // IEFFECTGENERATOR_H

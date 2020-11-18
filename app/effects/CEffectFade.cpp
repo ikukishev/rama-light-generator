@@ -80,3 +80,4 @@ QWidget *CEffectFade::buildWidget(QWidget *parent)
    return configWidget;
 }
 
+DECLARE_EFFECT_FACTORY( Fade, CEffectFade )
