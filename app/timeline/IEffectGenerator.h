@@ -8,6 +8,7 @@
 #include <memory>
 #include <QWidget>
 #include <QDebug>
+#include "SpectrumData.h"
 
 constexpr int labelHeight = 15;
 
@@ -63,7 +64,7 @@ public:
 
    QJsonObject toJson() const ;
 
-   double generate( int64_t position, const std::vector<float>& fft );
+   double generate( const SpectrumData& spectrumData );
 
    QWidget* configurationWidget( QWidget* parent );
 
@@ -72,7 +73,7 @@ public:
 protected:
    virtual QJsonObject toJsonParameters() const = 0;
    virtual bool parseParameters( const QJsonObject& parameters ) = 0;
-   virtual double calculateIntensity( int64_t position, const std::vector<float>& fft ) = 0;
+   virtual double calculateIntensity( const SpectrumData& spectrumData ) = 0;
    virtual QWidget* buildWidget( QWidget* parent ) = 0;
 
 private:

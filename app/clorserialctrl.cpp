@@ -90,7 +90,7 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                        {
                           if ( effect.second->isPositionActive( spectrum.position ) )
                           {
-                             auto effectValue = effect.second->generate( spectrum.position, spectrum.spectrum );
+                             auto effectValue = effect.second->generate( spectrum );
                              if ( effectValue > maxEffectValue )
                              {
                                 maxEffectValue = effectValue;

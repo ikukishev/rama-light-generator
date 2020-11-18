@@ -1,17 +1,17 @@
-#ifndef CEFFECTFADE_H
-#define CEFFECTFADE_H
+#ifndef CEffectWave_H
+#define CEffectWave_H
 
 #include "timeline/IEffectGenerator.h"
 
-class CEffectMaxLevel: public IEffectGenerator
+class CEffectWave: public IEffectGenerator
 {
 public:
 
-   CEffectMaxLevel( IEffectGeneratorFactory& afactory )
+   CEffectWave( IEffectGeneratorFactory& afactory )
       : IEffectGenerator( afactory )
    {}
 
-   CEffectMaxLevel( IEffectGeneratorFactory& afactory, const QUuid& uuid )
+   CEffectWave( IEffectGeneratorFactory& afactory, const QUuid& uuid )
       : IEffectGenerator(afactory, uuid)
    {}
 
@@ -23,11 +23,11 @@ protected:
 
 private:
 
-   double m_gain = 1.0;
-   double m_fade = 1.0;
-   int64_t lastPosition = 0;
-   double lastLevel = 0;
+   double m_phaseShift = 0;
+   double m_waveLength = 1.0;
+   double m_waveGain = 1.0;
+   double m_waveAmplitudeShift = 0.0;
 };
 
 
-#endif // CEFFECTFADEUP
+#endif // CEffectWave

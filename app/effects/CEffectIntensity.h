@@ -24,7 +24,7 @@ protected:
    virtual QJsonObject toJsonParameters() const override;
    virtual bool parseParameters( const QJsonObject& parameters ) override;
 
-   virtual double calculateIntensity( int64_t position, const std::vector<float>& fft ) override;
+   virtual double calculateIntensity( const SpectrumData& spectrumData  ) override;
 
    virtual QWidget *buildWidget(QWidget *parent) override;
 

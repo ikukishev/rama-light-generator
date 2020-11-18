@@ -38,10 +38,10 @@ bool CEffectMaxLevel::parseParameters(const QJsonObject &parameters)
    return isOk;
 }
 
-double CEffectMaxLevel::calculateIntensity( int64_t position, const std::vector<float>& fft)
+double CEffectMaxLevel::calculateIntensity(const SpectrumData &spectrumData)
 {
     float maxLevel = 0;
-    for ( auto& level : fft )
+    for ( auto& level : spectrumData.spectrum )
     {
         if ( level > maxLevel )
         {
@@ -55,12 +55,12 @@ double CEffectMaxLevel::calculateIntensity( int64_t position, const std::vector<
     else if ( maxLevel < 0.0 )
         maxLevel = 0.0;
 
-    auto dt = position - lastPosition;
+    auto dt = spectrumData.position - lastPosition;
     if (dt < 0)
     {
         dt=0;
     }
-    lastPosition = position;
+    lastPosition = spectrumData.position;
 
    auto k = (-1.0 / (1000.0 * ( m_fade < 0.1 ? 0.1 : m_fade )));
    auto b = 1.0;
@@ -73,11 +73,6 @@ double CEffectMaxLevel::calculateIntensity( int64_t position, const std::vector<
    {
        lastLevel = maxLevel;
    }
-
-
-   qDebug() << "CEffectMaxLevel::calculateIntensity(" << position << ") level:"<< lastLevel;
-
-
 
    return lastLevel;
 }

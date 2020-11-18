@@ -14,6 +14,7 @@ SOURCES  += channelconfigurator.cpp \
             effects/CEffectIntensity.cpp \
             effects/CEffectMaxLevel.cpp \
             effects/CEffectSpectrumBar.cpp \
+            effects/CEffectWave.cpp \
             main.cpp \
             mainwindow.cpp \
             qbassaudiofile.cpp \
@@ -28,6 +29,7 @@ SOURCES  += channelconfigurator.cpp \
 
 HEADERS  += channelconfigurator.h \
             CConfiguration.h \
+            SpectrumData.h \
             ceffecteditorwidget.h \
             clightsequence.h \
             clorserialctrl.h \
@@ -36,6 +38,7 @@ HEADERS  += channelconfigurator.h \
             effects/CEffectIntensity.h \
             effects/CEffectMaxLevel.h \
             effects/CEffectSpectrumBar.h \
+            effects/CEffectWave.h \
             mainwindow.h \
             qbassaudiofile.h \
             spectrograph.h \

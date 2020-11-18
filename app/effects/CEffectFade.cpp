@@ -36,14 +36,14 @@ bool CEffectFade::parseParameters(const QJsonObject &parameters)
    return isOk;
 }
 
-double CEffectFade::calculateIntensity( int64_t position, const std::vector<float>& )
+double CEffectFade::calculateIntensity(const SpectrumData &spectrumData)
 {
    double& y0 = m_start_intensity;
    double& y1 = m_end_intensity;
    double x0 = effectStartPosition();
    double x1 = effectDuration() + effectStartPosition();
 
-   double y = y0 + (position - x0)*(y1 - y0)/(x1 - x0);
+   double y = y0 + (spectrumData.position - x0)*(y1 - y0)/(x1 - x0);
    return y;
 }
 

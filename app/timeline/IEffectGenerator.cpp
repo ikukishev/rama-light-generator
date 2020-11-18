@@ -105,12 +105,12 @@ QJsonObject IEffectGenerator::toJson() const
    return object;
 }
 
-double IEffectGenerator::generate(int64_t position , const std::vector<float> &fft)
+double IEffectGenerator::generate(const SpectrumData &spectrumData )
 {
    double intensity = 0.0;
-   if ( isPositionActive( position ) )
+   if ( isPositionActive( spectrumData.position ) )
    {
-      intensity = calculateIntensity( position, fft );
+      intensity = calculateIntensity( spectrumData );
    }
    return intensity;
 }
@@ -166,8 +166,6 @@ QWidget *IEffectGenerator::configurationWidget( QWidget* parent )
    parametersGroup->setLayout( vGroupLayout );
 
    hlayout->addWidget( parametersGroup );
-
-
 
    configWidget->setLayout( hlayout );
 

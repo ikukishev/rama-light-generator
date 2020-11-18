@@ -26,7 +26,7 @@ bool CEffectIntensity::parseParameters(const QJsonObject &parameters)
     return isOk;
 }
 
-double CEffectIntensity::calculateIntensity(int64_t position, const std::vector<float> &fft)
+double CEffectIntensity::calculateIntensity(const SpectrumData &)
 {
     return m_intensity;
 }

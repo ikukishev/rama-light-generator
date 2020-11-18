@@ -1,14 +1,14 @@
-
 #include <QVBoxLayout>
 #include <QSlider>
 #include <QLabel>
-
-
+#include "spectrograph.h"
 #include "CEffectSpectrumBar.h"
 
 
 const QString cKeyGainValue( "gainValue" );
 const QString cKeyFadeValue( "fadeValue" );
+const QString cKeyThresholdValue( "thresholdValue" );
+const QString cKeySpectrumBarIndex( "spectrumBarIndex" );
 
 
 QJsonObject CEffectSpectrumBar::toJsonParameters() const
@@ -17,50 +17,55 @@ QJsonObject CEffectSpectrumBar::toJsonParameters() const
 
    parameters[ cKeyGainValue ] = m_gain;
    parameters[ cKeyFadeValue ] = m_fade;
+   parameters[ cKeyThresholdValue ] = m_threshold;
+   parameters[ cKeySpectrumBarIndex ] = int(m_spectrumBarIndex);
 
    return parameters;
 }
+
 
 bool CEffectSpectrumBar::parseParameters(const QJsonObject &parameters)
 {
    bool isOk = false;
    if ( parameters.contains( cKeyGainValue )
-        && parameters.contains( cKeyFadeValue )  )
+        && parameters.contains( cKeyFadeValue )
+        && parameters.contains( cKeyThresholdValue )
+        && parameters.contains( cKeySpectrumBarIndex )  )
    {
-      if ( parameters[ cKeyGainValue ].isDouble()
-           && parameters[ cKeyFadeValue ].isDouble() )
-      {
-         m_fade = parameters[ cKeyFadeValue ].toDouble( );
-         m_gain = parameters[ cKeyGainValue ].toDouble( );
-         isOk = true;
-      }
+      m_fade = parameters[ cKeyFadeValue ].toDouble( 1.0 );
+      m_gain = parameters[ cKeyGainValue ].toDouble( 1.0 );
+      m_threshold = parameters[ cKeyThresholdValue ].toDouble( 0.0 );
+      m_spectrumBarIndex = parameters[ cKeyGainValue ].toInt(1);
+      isOk = true;
    }
    return isOk;
 }
 
-double CEffectSpectrumBar::calculateIntensity( int64_t position, const std::vector<float>& fft)
+
+double CEffectSpectrumBar::calculateIntensity(const SpectrumData &spectrumData)
 {
-    float maxLevel = 0;
-    for ( auto& level : fft )
-    {
-        if ( level > maxLevel )
-        {
-            maxLevel = level;
-        }
-    }
 
-    maxLevel = maxLevel * m_gain;
-    if ( maxLevel > 1.0 )
-        maxLevel = 1.0;
-    else if ( maxLevel < 0.0 )
-        maxLevel = 0.0;
+   auto intensityLevel = 0.0;
+   if ( spectrumData.spectrum.size() > m_spectrumBarIndex )
+   {
+      intensityLevel = spectrumData.spectrum[ m_spectrumBarIndex ] * m_gain;
+   }
 
-    auto dt = position - lastPosition;
-    if (dt < 0)
-    {
-        dt=0;
-    }
-    lastPosition = position;
+   if ( intensityLevel > 1.0 )
+   {
+      intensityLevel = 1.0;
+   }
+   else if ( intensityLevel < 0.0 )
+   {
+      intensityLevel = 0.0;
+   }
+
+   auto dt = spectrumData.position - lastPosition;
+   if (dt < 0)
+   {
+       dt=0;
+   }
+   lastPosition = spectrumData.position;
 
    auto k = (-1.0 / (1000.0 * ( m_fade < 0.1 ? 0.1 : m_fade )));
    auto b = 1.0;
@@ -69,64 +74,121 @@ double CEffectSpectrumBar::calculateIntensity( int64_t position, const std::vect
 
    lastLevel -= intensityReduction;
 
-   if ( lastLevel < maxLevel )
+   if ( lastLevel < intensityLevel && intensityLevel > m_threshold )
    {
-       lastLevel = maxLevel;
+       lastLevel = intensityLevel;
    }
 
-
-
+   if ( nullptr != spectrograph )
+   {
+      spectrograph->spectrumChanged( spectrumData );
+   }
 
    return lastLevel;
 }
+
 
 QWidget *CEffectSpectrumBar::buildWidget(QWidget *parent)
 {
 
    QWidget* configWidget = new QWidget( parent );
+   auto hlayout = new QHBoxLayout( );
 
-   auto vlayout = new QVBoxLayout( );
 
-   auto gainLabel =  new QLabel("Gain: ", configWidget);
-   gainLabel->setMaximumHeight( 50 );
+   QWidget* configWidgetLeft = new QWidget( configWidget );
+   auto vlayout = new QVBoxLayout();
 
-   vlayout->addWidget(gainLabel);
 
-   QSlider * gain = new QSlider( configWidget );
-   gain->setMaximumHeight( 40 );
+   auto gainLabel =  new QLabel( "Gain: ", configWidgetLeft );
+   vlayout->addWidget( gainLabel );
+   QSlider * gain = new QSlider( configWidgetLeft );
    gain->setOrientation( Qt::Horizontal );
    gain->setMaximum( 100 );
    gain->setMinimum( 0 );
    gain->setValue( m_gain * 20 );
    vlayout->addWidget( gain );
 
-   auto fadeLabel =  new QLabel("Fade: ", configWidget);
-   fadeLabel->setMaximumHeight( 50 );
 
+   auto fadeLabel =  new QLabel("Fade: ", configWidgetLeft);
    vlayout->addWidget(fadeLabel);
-
-   QSlider * fade = new QSlider( configWidget );
-   fade->setMaximumHeight( 40 );
+   QSlider * fade = new QSlider( configWidgetLeft );
    fade->setOrientation( Qt::Horizontal );
-   fade->setMaximum(100);
-   fade->setMinimum(0);
+   fade->setMaximum( 100 );
+   fade->setMinimum( 0);
    fade->setValue( m_fade*20 );
    vlayout->addWidget( fade );
 
+
+   auto thresholdLabel =  new QLabel("Threshold: ", configWidgetLeft);
+   vlayout->addWidget(thresholdLabel);
+   QSlider * threshold = new QSlider( configWidgetLeft );
+   threshold->setOrientation( Qt::Horizontal );
+   threshold->setMaximum( 100 );
+   threshold->setMinimum( 0);
+   threshold->setValue( m_threshold*100 );
+   vlayout->addWidget( threshold );
+
    QObject::connect( gain, &QSlider::valueChanged, [ this ]( int value ){
-      m_gain = double(value) / 20.0;
+      m_gain = double( value ) / 20.0;
+      if ( nullptr != spectrograph )
+      {
+         spectrograph->setGain( m_gain );
+      }
    });
 
    QObject::connect( fade, &QSlider::valueChanged, [ this ]( int value ){
-      m_fade = double(value) / 20.0;
+      m_fade = double( value ) / 20.0;
+      if ( nullptr != spectrograph )
+      {
+         spectrograph->setFading( m_fade );
+      }
    });
 
-   auto widget = new QWidget( configWidget );
+   QObject::connect( threshold, &QSlider::valueChanged, [ this ]( int value ){
+      m_threshold = double( value ) / 100.0;
+      if ( nullptr != spectrograph )
+      {
+         spectrograph->setMinimumLevel( m_threshold );
+      }
+   });
+
+   auto widget = new QWidget( configWidgetLeft );
    vlayout->addWidget( widget );
 
-   configWidget->setLayout( vlayout );
+   configWidgetLeft->setMaximumWidth( 400 );
+   configWidgetLeft->setLayout( vlayout );
+   hlayout->addWidget( configWidgetLeft );
+
+
+   if ( nullptr != spectrograph )
+   {
+      delete spectrograph;
+      spectrograph = nullptr;
+   }
+   spectrograph = new Spectrograph( configWidget );
+
+   QObject::connect( spectrograph, &QWidget::destroyed, [this]( QObject* )
+   {
+      this->spectrograph = nullptr;
+   });
+
+   QObject::connect( spectrograph, &Spectrograph::selectedBarChanged, [this]( int index )
+   {
+      this->m_spectrumBarIndex = index;
+   });
+
+   spectrograph->setGain( m_gain );
+   spectrograph->setFading( m_fade );
+   spectrograph->setMinimumLevel( m_threshold );
+   spectrograph->setBarSelected( m_spectrumBarIndex );
+
+   hlayout->addWidget( spectrograph );
+
+
+   configWidget->setLayout( hlayout );
 
    return configWidget;
 }
+
 
 DECLARE_EFFECT_FACTORY( SpectrumBar, CEffectSpectrumBar )
