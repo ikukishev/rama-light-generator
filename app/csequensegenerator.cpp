@@ -302,11 +302,11 @@ private:
 
 
 
-class CEffectIntensity : public CGeneratorNodeBase
+class CEffectInten : public CGeneratorNodeBase
 {
 public:
 
-    CEffectIntensity( pugi::xml_node&& node, uint32_t astartCentisecond, uint32_t aendCentisecond, uint32_t aintensity )
+    CEffectInten( pugi::xml_node&& node, uint32_t astartCentisecond, uint32_t aendCentisecond, uint32_t aintensity )
         : CGeneratorNodeBase( std::move(node) )
         , startCentisecond( astartCentisecond )
         , endCentisecond( aendCentisecond )
@@ -390,7 +390,7 @@ protected:
 
         auto current = spectrum.begin();
 
-        appendChild<CEffectIntensity>(1u, milisecondToCentisecond( (*current)->position ), 0u);
+        appendChild<CEffectInten>(1u, milisecondToCentisecond( (*current)->position ), 0u);
 
         auto prev = current;
         ++current;
@@ -429,7 +429,7 @@ protected:
 
             intensity = (100.0 * currentIntensity) * (channel.voltage / (220.0));
 
-            appendChild<CEffectIntensity>( milisecondToCentisecond( (*prev)->position ),
+            appendChild<CEffectInten>( milisecondToCentisecond( (*prev)->position ),
                                            milisecondToCentisecond( (*current)->position ),
                                            uint32_t(intensity) );
         }

@@ -2,6 +2,7 @@
 #define CEFFECTEDITORWIDGET_H
 
 #include <QWidget>
+#include <QVBoxLayout>
 #include "timeline/CTimeLineView.h"
 #include "clightsequence.h"
 
@@ -21,6 +22,9 @@ signals:
 private:
    CTimeLineView* timeline = nullptr;
    QWidget* configurationArea = nullptr;
+   QVBoxLayout* configurationAreaLayout = nullptr;
+
+   QWidget* configurationWidget = nullptr;
 
 
    std::list<std::shared_ptr<QMetaObject::Connection>> m_spectrumConnections;

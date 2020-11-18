@@ -7,6 +7,7 @@
 #include "CConfiguration.h"
 #include <memory>
 #include <list>
+#include "timeline/IEffectGenerator.h"
 
 
 class CLightSequence;
@@ -25,6 +26,7 @@ signals:
    void sequenseEvent( CLightSequence* sequense );
 
 };
+
 
 class CLightSequence : public QObject
         , public std::enable_shared_from_this<CLightSequence>
@@ -71,6 +73,7 @@ public:
       std::shared_ptr< double > gain;
       double minimumLevel = 0.0;
       double fading = 1.0;
+      std::map< QUuid, std::shared_ptr<IEffectGenerator> > effects;
    };
 
 

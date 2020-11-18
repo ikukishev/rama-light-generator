@@ -19,6 +19,7 @@ const QString cKeyChannelSpectrumIndex("spectrumIndex");
 const QString cKeyChannelGain("gain");
 const QString cKeyChannelMinimumLevel("minimumLevel");
 const QString cKeyChannelFading("fading");
+const QString cKeyChannelEffects("effects");
 
 
 IInnerCommunicationGlue CLightSequence::sPlayEventDistributor(nullptr);
@@ -405,10 +406,20 @@ QJsonObject CLightSequence::SequenceChannelConfigation::serialize() const
 {
     QJsonObject jo;
     jo[ cKeyChannelUUID ] = channelUuid.toString();
-    if ( spectrumIndex ) jo[ cKeyChannelSpectrumIndex ] = static_cast<int>(*spectrumIndex);
-    if ( gain ) jo[ cKeyChannelGain ] = static_cast<double>(*gain);
+    if ( spectrumIndex ) jo[ cKeyChannelSpectrumIndex ] = static_cast<int>( *spectrumIndex );
+    if ( gain ) jo[ cKeyChannelGain ] = static_cast<double>( *gain );
     jo[ cKeyChannelMinimumLevel ] = minimumLevel;
     jo[ cKeyChannelFading ] = fading;
+
+    QJsonArray effectsJsonObjects;
+    for ( auto& effect : effects )
+    {
+       if ( effect.second )
+       {
+          effectsJsonObjects.push_back( effect.second->toJson() );
+       }
+    }
+    jo[ cKeyChannelEffects ] = effectsJsonObjects;
 
     return jo;
 }
@@ -462,6 +473,23 @@ std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::Sequ
                     {
                         cc->fading = m;
                     }
+                }
+
+
+                if ( jo.contains( cKeyChannelEffects ) )
+                {
+                   QJsonArray effectsArray = jo[ cKeyChannelEffects ].toArray();
+                   for ( auto&& effect : effectsArray )
+                   {
+                      if ( effect.isObject() )
+                      {
+                         auto generator = IEffectGeneratorFactory::create(effect.toObject());
+                         if ( generator )
+                         {
+                            cc->effects[ generator->getUuid() ] = generator;
+                         }
+                      }
+                   }
                 }
 
             }

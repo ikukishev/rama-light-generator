@@ -7,6 +7,7 @@
 
 #include "CTimeLineView.h"
 #include "CTimeLineEffect.h"
+#include "IEffectGenerator.h"
 
 CTimeLineView::CTimeLineView( QWidget *parent )
     : QGraphicsView( new QGraphicsScene( ), parent )
@@ -46,13 +47,13 @@ void CTimeLineView::mousePressEvent(QMouseEvent *event)
          {
              qDebug() << event->pos() << item << "channel:" << channel->label();
              QMenu menu(this);
-             for ( auto f : IEffectFactory::trackFactories() )
+             for ( auto f : IEffectGeneratorFactory::getGeneratorFactories() )
              {
-                 QAction* newAct = new QAction( f->menuLabel(), this );
+                 QAction* newAct = new QAction( f.first, this );
                  menu.addAction( newAct );
-                 connect( newAct, &QAction::triggered, [ this, f, channel, pos = mapToScene(event->pos()) ]()
+                 connect( newAct, &QAction::triggered, [ this, factory = f.second, channel, pos = mapToScene(event->pos()) ]()
                  {
-                    f->create( channel, convertSceneXToPosition( pos.x() ) );
+                    new CTimeLineEffect( channel, factory->create(), convertSceneXToPosition( pos.x() ) );
                  });
              }
              menu.exec( QCursor::pos() );
@@ -261,6 +262,7 @@ void CTimeLineView::addChannel( CTimeLineChannel *channel )
    m_channels.push_back( channel );
    channel->setTimeLinePtr( this );
    scene()->addItem( channel );
+   updateSceneRect();
 }
 
 void CTimeLineView::removeChannel(CTimeLineChannel *channel)

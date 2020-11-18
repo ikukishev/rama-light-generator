@@ -9,6 +9,9 @@
 #include <QString>
 #include <QUuid>
 
+#include "IEffectGenerator.h"
+
+
 constexpr int cFieldMargin = 10;
 
 class ITimeLineChannel;
@@ -24,7 +27,9 @@ class ITimeLineChannel
    friend class IEffect;
 
 public:
-   ITimeLineChannel( QObject* parent = nullptr ) : QObject(parent) {};
+   ITimeLineChannel( QObject* parent = nullptr ) : QObject(parent)
+   {};
+
    virtual ~ITimeLineChannel();
 
    virtual QColor color() const = 0;
@@ -51,35 +56,36 @@ protected:
 
 };
 
+
 class IEffect : public QObject
              , public QGraphicsItem
 {
    Q_OBJECT
 public:
 
-   IEffect( const QUuid& uuid, QObject * parent = nullptr )
+   IEffect( std::shared_ptr<IEffectGenerator> effectGenerator, QObject * parent = nullptr )
       : QObject( parent )
-      , m_uuid( uuid )
+      , m_effectGenerator( effectGenerator )
    {}
-
-   IEffect( QObject * parent = nullptr );
 
    virtual ~IEffect() = default;
 
-   const QString& effectNameLabel() const {  return m_effectNameLabel;  }
-   void setEffectNameLabel(const QString &ef) {  m_effectNameLabel = ef;  }
+   const QString& effectNameLabel() const {  return m_effectGenerator->effectNameLabel();  }
+   void setEffectNameLabel(const QString &ef) {  m_effectGenerator->setEffectNameLabel( ef );  }
 
-   int64_t effectDuration() const         {  return m_effectDuration;  }
+   int64_t effectDuration() const         {  return m_effectGenerator->effectDuration();  }
    void setEffectDuration(const int64_t &eD);
 
-   int64_t effectStartPosition() const    {  return m_effectStartPosition;  }
-   void setEffectStartPosition(const int64_t &SP)  {  m_effectStartPosition = SP;  }
+   int64_t effectStartPosition() const    {  return m_effectGenerator->effectStartPosition();  }
+   void setEffectStartPosition(const int64_t &SP)  {  m_effectGenerator->setEffectStartPosition( SP );  }
 
    ITimeLineChannel *getChannel() const;
 
    void updatePosition();
 
-   const QUuid& getUuid() const;
+   const QUuid& getUuid() const  { return   m_effectGenerator->getUuid(); }
+
+   std::shared_ptr<IEffectGenerator> getEffectGenerator() const;
 
 signals:
    void clicked( ITimeLineChannel *channel, IEffect* track );
@@ -89,29 +95,7 @@ protected:
    void effectsSelected();
 
 private:
-   QUuid   m_uuid;
-   QString m_effectNameLabel;
-   int64_t m_effectDuration;
-   int64_t m_effectStartPosition;
-};
-
-
-class IEffectFactory
-{
-public:
-   IEffectFactory();
-   virtual ~IEffectFactory() = default;
-
-   virtual const QString& menuLabel() const = 0;
-
-   virtual IEffect* create(ITimeLineChannel* parent, u_int64_t position) = 0;
-
-   static const std::list<IEffectFactory *> &trackFactories();
-
-private:
-   static std::list<IEffectFactory *> &initTrackFactories();
-   static std::shared_ptr<std::list< IEffectFactory* >> sTrackFactories;
-
+   std::shared_ptr<IEffectGenerator> m_effectGenerator;
 };
 
 
@@ -135,7 +119,5 @@ public:
 
 };
 
-
-using TimeLineTrackVievPtr = std::shared_ptr<ITimeLineTrackView>;
 
 #endif

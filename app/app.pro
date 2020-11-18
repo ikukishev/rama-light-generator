@@ -10,6 +10,10 @@ SOURCES  += channelconfigurator.cpp \
             clightsequence.cpp \
             clorserialctrl.cpp \
             csequensegenerator.cpp \
+            effects/CEffectFade.cpp \
+            effects/CEffectIntensity.cpp \
+            effects/CEffectTest.cpp \
+            effects/CEffectTest3.cpp \
             main.cpp \
             mainwindow.cpp \
             qbassaudiofile.cpp \
@@ -19,6 +23,7 @@ SOURCES  += channelconfigurator.cpp \
             timeline/CTimeLineIndicator.cpp \
             timeline/CTimeLinePosition.cpp \
             timeline/CTimeLineView.cpp \
+            timeline/IEffectGenerator.cpp \
             timeline/ITimeLineTrackView.cpp
 
 HEADERS  += channelconfigurator.h \
@@ -27,6 +32,10 @@ HEADERS  += channelconfigurator.h \
             clightsequence.h \
             clorserialctrl.h \
             csequensegenerator.h \
+            effects/CEffectFade.h \
+            effects/CEffectIntensity.h \
+            effects/CEffectTest.h \
+            effects/CEffectTest3.h \
             mainwindow.h \
             qbassaudiofile.h \
             spectrograph.h \
@@ -35,6 +44,7 @@ HEADERS  += channelconfigurator.h \
             timeline/CTimeLineIndicator.h \
             timeline/CTimeLinePosition.h \
             timeline/CTimeLineView.h \
+            timeline/IEffectGenerator.h \
             timeline/ITimeLineTrackView.h
 
 INCLUDEPATH += ../3rdparty/

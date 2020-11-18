@@ -12,18 +12,12 @@ class CTimeLineEffect
         : public IEffect
 {
 public:
-    CTimeLineEffect( ITimeLineChannel *channel,
+    CTimeLineEffect( ITimeLineChannel *channel, std::shared_ptr<IEffectGenerator> effectGenerator,
                     uint64_t position,
                     QObject* parent = nullptr );
 
-    class EffectFactory : public IEffectFactory
-    {
-    public:
-       const QString &menuLabel() const;
-       IEffect *create(ITimeLineChannel *parent, u_int64_t position);
-
-       static EffectFactory factory;
-    };
+    CTimeLineEffect( ITimeLineChannel *channel, std::shared_ptr<IEffectGenerator> effectGenerator,
+                    QObject* parent = nullptr );
 
     // QGraphicsItem interface
 public:
@@ -33,7 +27,6 @@ public:
     // QGraphicsItem interface
 protected:
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
-
 
     // QGraphicsItem interface
 protected:

@@ -70,7 +70,6 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                 if ( currentSpectrum->position > spectrum.position || currentSpectrum->spectrum.size() != spectrum.spectrum.size() )
                 {
                     *currentSpectrum = spectrum;
-
                 }
 
                 auto dt = spectrum.position - currentSpectrum->position;
@@ -80,42 +79,72 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                 {
                     auto localConfiguration = sequense->getConfiguration( channel.uuid );
 
+                    auto& effects = localConfiguration->effects;
+
+                    bool useEffectValue = false;
+                    double maxEffectValue = 0.0;
+
+                    for ( auto& effect : effects )
+                    {
+                       if ( effect.second )
+                       {
+                          if ( effect.second->isPositionActive( spectrum.position ) )
+                          {
+                             auto effectValue = effect.second->generate( spectrum.position, spectrum.spectrum );
+                             if ( effectValue > maxEffectValue )
+                             {
+                                maxEffectValue = effectValue;
+                             }
+                             useEffectValue = true;
+                          }
+                       }
+                    }
+
+
                     auto spectrumIndex = channel.spectrumIndex;
                     if ( localConfiguration->isSpectrumIndexSet() )
                     {
                         spectrumIndex = *(localConfiguration->spectrumIndex);
                     }
 
-                    auto gain = channel.multipler;
-                    if ( localConfiguration->isGainSet() )
-                    {
-                        gain = *(localConfiguration->gain);
-                    }
 
                     auto k = (-1.0 / (1000.0 * ( localConfiguration->fading < 0.1 ? 0.1 : localConfiguration->fading )));
                     auto b = 1.0;
                     double y = k * double(dt) + b;
                     double intensityReduction = b - y;
 
-
-
                     currentSpectrum->spectrum[ spectrumIndex ] -= intensityReduction;
-                    auto value = spectrum.spectrum[ spectrumIndex ] * gain;
 
 
-                    if ( value > currentSpectrum->spectrum[ spectrumIndex ] )
+                    if ( !useEffectValue )
                     {
-                        if ( value > 1.0 )
-                        {
-                            currentSpectrum->spectrum[ spectrumIndex ] = 1.0;
-                        }
-                        else if ( value > localConfiguration->minimumLevel )
-                        {
-                            currentSpectrum->spectrum[ spectrumIndex ] = value;
-                        }
+                       auto gain = channel.multipler;
+                       if ( localConfiguration->isGainSet() )
+                       {
+                           gain = *(localConfiguration->gain);
+                       }
+
+                       auto value = spectrum.spectrum[ spectrumIndex ] * gain;
+
+
+                       if ( value > currentSpectrum->spectrum[ spectrumIndex ] )
+                       {
+                           if ( value > 1.0 )
+                           {
+                               currentSpectrum->spectrum[ spectrumIndex ] = 1.0;
+                           }
+                           else if ( value > localConfiguration->minimumLevel )
+                           {
+                               currentSpectrum->spectrum[ spectrumIndex ] = value;
+                           }
+                       }
+                    }
+                    else
+                    {
+                       currentSpectrum->spectrum[ spectrumIndex ] = maxEffectValue;
                     }
 
-                    qDebug() << channel.label << "reduction:" << intensityReduction << "Intensity:" << currentSpectrum->spectrum[ spectrumIndex ];
+                    //qDebug() << channel.label << "reduction:" << intensityReduction << "Intensity:" << currentSpectrum->spectrum[ spectrumIndex ];
 
                     setIntensity( channel, currentSpectrum->spectrum[ spectrumIndex ] );
 

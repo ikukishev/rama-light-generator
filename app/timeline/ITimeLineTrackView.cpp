@@ -3,26 +3,6 @@
 
 constexpr int64_t cMinimumDuration = 200;
 
-std::shared_ptr<std::list< IEffectFactory* >> IEffectFactory::sTrackFactories;
-
-IEffectFactory::IEffectFactory()
-{
-   initTrackFactories().push_back( this );
-}
-
-const std::list<IEffectFactory *> &IEffectFactory::trackFactories()
-{
-   return initTrackFactories();
-}
-
-std::list<IEffectFactory *> &IEffectFactory::initTrackFactories()
-{
-   if ( nullptr == sTrackFactories )
-   {
-      sTrackFactories = std::make_shared<std::list<IEffectFactory *>>();
-   }
-   return *sTrackFactories;
-}
 
 ITimeLineChannel *IEffect::getChannel() const
 {
@@ -47,15 +27,11 @@ void IEffect::effectsSelected()
    getChannel()->effectSelectedEvent( this );
 }
 
-const QUuid &IEffect::getUuid() const
+std::shared_ptr<IEffectGenerator> IEffect::getEffectGenerator() const
 {
-   return m_uuid;
+   return m_effectGenerator;
 }
 
-IEffect::IEffect(QObject *parent)
-   : QObject( parent )
-   , m_uuid( QUuid::createUuid() )
-{}
 
 void IEffect::setEffectDuration(const int64_t &eD)
 {
@@ -64,20 +40,20 @@ void IEffect::setEffectDuration(const int64_t &eD)
       if ( eD > cMinimumDuration
            && ( getChannel()->timeLinePtr()->compositionDuration() > effectStartPosition() + eD ) )
       {
-         m_effectDuration = eD;
+         m_effectGenerator->setEffectDuration( eD );
       }
       else if ( eD <= cMinimumDuration )
       {
-         m_effectDuration = cMinimumDuration;
+         m_effectGenerator->setEffectDuration( cMinimumDuration );
       }
       else
       {
-         m_effectDuration = getChannel()->timeLinePtr()->compositionDuration() - effectStartPosition() - 1;
+         m_effectGenerator->setEffectDuration( getChannel()->timeLinePtr()->compositionDuration() - effectStartPosition() - 1 );
       }
    }
    else
    {
-      m_effectDuration = cMinimumDuration;
+      m_effectGenerator->setEffectDuration( cMinimumDuration );
    }
 }
 
@@ -120,3 +96,4 @@ void ITimeLineChannel::effectSelectedEvent(IEffect *effect)
 {
    emit effectSelected( this, effect );
 }
+

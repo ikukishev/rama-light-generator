@@ -1,20 +1,32 @@
-#include "CTimeLineEffect.h"
 #include <QDebug>
 #include <QCursor>
 #include <QGraphicsScene>
 
+#include "CTimeLineEffect.h"
+#include "IEffectGenerator.h"
+
+
 constexpr int64_t cDefaultDuration = 5000;
 
-CTimeLineEffect::CTimeLineEffect( ITimeLineChannel* channel, uint64_t position, QObject* parent )
-    : IEffect( parent )
+
+CTimeLineEffect::CTimeLineEffect( ITimeLineChannel* channel, std::shared_ptr<IEffectGenerator> effectGenerator, uint64_t position, QObject* parent )
+    : IEffect( effectGenerator, parent )
     , oldPos( scenePos() )
 {
     setFlags(ItemIsMovable);
     setEffectStartPosition( position );
-    setEffectNameLabel( "base" );
     setParentItem( channel );
     setEffectDuration( cDefaultDuration );
     updatePosition();
+}
+
+CTimeLineEffect::CTimeLineEffect( ITimeLineChannel *channel, std::shared_ptr<IEffectGenerator> effectGenerator, QObject *parent)
+   : IEffect( effectGenerator, parent )
+   , oldPos( scenePos() )
+{
+   setFlags(ItemIsMovable);
+   setParentItem( channel );
+   updatePosition();
 }
 
 QRectF CTimeLineEffect::boundingRect() const
@@ -173,16 +185,3 @@ void CTimeLineEffect::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
     QGraphicsItem::mouseDoubleClickEvent(event);
 }
 
-
-CTimeLineEffect::EffectFactory CTimeLineEffect::EffectFactory::factory;
-
-const QString &CTimeLineEffect::EffectFactory::menuLabel() const
-{
-   static QString label("test");
-   return label;
-}
-
-IEffect *CTimeLineEffect::EffectFactory::create(ITimeLineChannel *parent, u_int64_t position)
-{
-   return new CTimeLineEffect( parent, position );
-}
