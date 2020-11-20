@@ -161,15 +161,21 @@ std::vector<QWidget *> CLightSequence::getControlWidgets()
    m_conncetionToDestroy.push_back( std::shared_ptr<QMetaObject::Connection>(
                new QMetaObject::Connection( connect( m_audioFile.get(), &QBassAudioFile::playStarted, [this, playButton](){
       playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPause) );
-      sPlayEventDistributor.sendSequenseEvent( this );
-      emit playStarted( shared_from_this() );
+      if ( !m_isGenerateStarted )
+      {
+         sPlayEventDistributor.sendSequenseEvent( this );
+         emit playStarted( shared_from_this() );
+      }
    })), deleter ));
 
 
    m_conncetionToDestroy.push_back( std::shared_ptr<QMetaObject::Connection>(
                new QMetaObject::Connection( connect( m_audioFile.get(), &QBassAudioFile::playStoped, [this, playButton](){
       playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
-      emit playStoped( shared_from_this() );
+      if ( !m_isGenerateStarted )
+      {
+         emit playStoped( shared_from_this() );
+      }
    })), deleter ));
 
 
@@ -177,7 +183,10 @@ std::vector<QWidget *> CLightSequence::getControlWidgets()
                new QMetaObject::Connection( connect( m_audioFile.get(), &QBassAudioFile::playFinished, [this, playButton](){
       playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
       qDebug() << "emit emit playFinished( shared_from_this() );" ;
-      emit playFinished( shared_from_this() );
+      if ( !m_isGenerateStarted )
+      {
+         emit playFinished( shared_from_this() );
+      }
    })), deleter ));
 
 
@@ -217,6 +226,8 @@ std::vector<QWidget *> CLightSequence::getControlWidgets()
       m_isGenerateStarted = false;
       disconnect(*connectionFinishPtr);
       m_audioFile->stop();
+      trackVolume->setValue(100);
+      m_audioFile->setVolume(1.0f);
    };
 
    auto getStart = [=]()
@@ -236,9 +247,7 @@ std::vector<QWidget *> CLightSequence::getControlWidgets()
          {
              labelStatus->setText("Done with error");
          }
-         trackVolume->setValue(100);
-         m_audioFile->setVolume(1.0f);
-         emit processFinished();
+         emit generationFinished( shared_from_this() );
          genStop();
       });
 
@@ -256,11 +265,11 @@ std::vector<QWidget *> CLightSequence::getControlWidgets()
       }
       else
       {
+         m_isGenerateStarted = true;
          m_audioFile->resetFFTData();
          m_audioFile->setVolume(0.0f);
          m_audioFile->play();
-         m_isGenerateStarted = true;
-         emit generationStarted();
+         emit generationStarted( shared_from_this() );
          getStart();
       }
    });

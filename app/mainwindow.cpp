@@ -429,41 +429,34 @@ void MainWindow::playNext()
       }
    }
 
-   auto notGeneratedIndexes = [this]()
+
+   std::vector<std::size_t> indexList;
+
+   for ( std::size_t i = 0;  i < m_sequences.size(); ++i )
    {
-      std::vector<std::size_t> list;
-
-      for ( std::size_t i = 0;  i < m_sequences.size(); ++i )
+      if ( !m_sequences[i]->isGenerateStarted() )
       {
-         if ( !m_sequences[i]->isGenerateStarted() )
-         {
-            list.push_back( i );
-         }
+         indexList.push_back( i );
       }
-
-      return list;
-   };
+   }
 
    if ( isPlayRandomEnabled )
    {
-      auto list = notGeneratedIndexes();
-
-      if ( !list.empty() )
+      if ( !indexList.empty() )
       {
-         int index = std::rand() % list.size();
-         current = m_sequences[ list[ index ] ];
+         int index = std::rand() % indexList.size();
+         current = m_sequences[ indexList[ index ] ];
       }
-
    }
    else if ( nullptr == current )
    {
-      if ( m_sequences.empty() )
+      if ( indexList.empty() )
       {
          return;
       }
       else
       {
-         current = m_sequences[0];
+         current = m_sequences[indexList[0]];
       }
    }
    else
@@ -477,15 +470,14 @@ void MainWindow::playNext()
          }
       }
 
-      auto list = notGeneratedIndexes();
-      if ( !list.empty() )
+      if ( !indexList.empty() )
       {
          auto nextIndex = -1;
-         for ( std::size_t index = 0; index < list.size(); ++index )
+         for ( std::size_t index = 0; index < indexList.size(); ++index )
          {
-            if ( list[index] > var )
+            if ( indexList[index] > var )
             {
-               nextIndex = list[index];
+               nextIndex = indexList[index];
                break;
             }
          }
@@ -496,16 +488,15 @@ void MainWindow::playNext()
          }
          else
          {
-            current = m_sequences[ list[0] ];
+            current = m_sequences[ indexList[0] ];
          }
       }
-
    }
 
    if ( nullptr != current )
    {
-
-         current->getAudioFile()->play();
+      current->getAudioFile()->setPosition( 0 );
+       current->getAudioFile()->play();
    }
 }
 
@@ -594,8 +585,15 @@ void MainWindow::adjustSequense( std::shared_ptr<CLightSequence> &seq )
 
         connect( seq.get(), &CLightSequence::playFinished,    [this](std::weak_ptr<CLightSequence> thisObject)
         {
-           qDebug() << "Play Finished";
             playNext();
+        });
+
+        connect( seq.get(), &CLightSequence::generationStarted,    [this](std::weak_ptr<CLightSequence> thisObject)
+        {
+            if ( m_current.lock() == thisObject.lock())
+            {
+               playNext();
+            }
         });
     }
 }

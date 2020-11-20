@@ -136,13 +136,13 @@ public:
    bool isGenerateStarted() const { return m_isGenerateStarted; }
 signals:
    void deleteTriggered( std::weak_ptr<CLightSequence> thisObject );
-   void generationStarted();
+   void generationStarted( std::weak_ptr<CLightSequence> thisObject );
    void playStarted( std::weak_ptr<CLightSequence> thisObject );
    void playStoped( std::weak_ptr<CLightSequence> thisObject );
    void playFinished( std::weak_ptr<CLightSequence> thisObject );
    void moveUp( std::weak_ptr<CLightSequence> thisObject );
    void moveDown( std::weak_ptr<CLightSequence> thisObject );
-   void processFinished();
+   void generationFinished( std::weak_ptr<CLightSequence> thisObject );
    void positionChanged(const SpectrumData& spectrum);
 
 private:

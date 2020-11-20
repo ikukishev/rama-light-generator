@@ -18,20 +18,6 @@ uint64_t totalCentseconds( const CLightSequence *sequense )
         auto& spData = sequense->getAudioFile()->getSpectrum();
         if ( !spData.empty() )
         {
-//            double max = 0.0;
-
-//            for ( auto& channelConfig : sequense->getGlobalConfiguration().channels() )
-//            {
-//                auto localConfig = sequense->getConfiguration( channelConfig.uuid );
-//                if ( localConfig )
-//                {
-//                    if ( max < localConfig->fading )
-//                    {
-//                        max = localConfig->fading;
-//                    }
-//                }
-//            }
-
             return milisecondToCentisecond( spData.back()->position ); // + uint64_t( max * 100.0 );
         }
     }

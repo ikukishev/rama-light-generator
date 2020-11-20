@@ -26,7 +26,7 @@ QBassAudioFile::QBassAudioFile()
 
     connect(this, &QBassAudioFile::playFinishedInternal, this, [this](){
        m_state = EState::Finished;
-       stop();
+       m_timer->stop();
        emit playFinished();
     });
 }
@@ -125,7 +125,7 @@ void QBassAudioFile::stop()
    else if ( EState::Finished == m_state
              || EState::Idle == m_state )
    {
-      m_timer->stop();
+
    }
    else
    {

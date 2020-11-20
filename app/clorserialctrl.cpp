@@ -35,15 +35,10 @@ bool CLORSerialCtrl::setPortParams(const QString &name, qint32 baudRate)
     m_serial.setPortName(name);
     m_serial.setBaudRate( baudRate );
 
-    if ( m_serial.open( QIODevice::WriteOnly ) )
-    {
-        m_timer->start( 500 );
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    m_timer->start( 500 );
+
+    return m_serial.open( QIODevice::WriteOnly );
+
 }
 
 bool CLORSerialCtrl::isOpen() const
@@ -64,6 +59,11 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                 , currentSpectrum = std::make_shared< SpectrumData >() ]
                 (const SpectrumData& spectrum)
         {
+            if ( !isOpen() )
+            {
+                return;
+            }
+
             auto sequense = currentSequense.lock();
             if ( nullptr != sequense )
             {
@@ -161,6 +161,11 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
 
 void CLORSerialCtrl::writeHeartbeatData()
 {
+    if ( !isOpen() )
+    {
+        m_serial.open( QIODevice::WriteOnly );
+    }
+
     if ( isOpen() )
     {
         m_serial.write( reinterpret_cast<const char*>(cHearbeatData), sizeof ( cHearbeatData ) );
