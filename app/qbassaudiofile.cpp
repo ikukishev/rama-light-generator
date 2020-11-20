@@ -10,7 +10,7 @@ QBassAudioFile::QBassAudioFile()
     , m_spectrumData()
     , m_timer( new QTimer(this) )
     , m_stream( 0 )
-    , m_state( EState::Stop )
+    , m_state( EState::Idle )
 {
     connect( m_timer, &QTimer::timeout, [this]() {
         if ( 0 != m_stream )
@@ -21,12 +21,13 @@ QBassAudioFile::QBassAudioFile()
             m_spectrumData.push_back(spectrum);
 
             emit positionChanged(*spectrum);
-            if ( pos >= duration()-10)
-            {
-                stop();
-                emit processFinished();
-            }
         }
+    });
+
+    connect(this, &QBassAudioFile::playFinishedInternal, this, [this](){
+       m_state = EState::Finished;
+       stop();
+       emit playFinished();
     });
 }
 
@@ -73,7 +74,9 @@ void QBassAudioFile::play()
 {
     if ( 0 != m_stream )
     {
-       if ( EState::Stop == m_state )
+       if ( EState::Stoped == m_state
+            || EState::Idle == m_state
+            || EState::Finished == m_state )
        {
           if ( !BASS_ChannelPlay( m_stream, false ) )
           {
@@ -83,13 +86,13 @@ void QBassAudioFile::play()
           {
              m_state = EState::Play;
              m_timer->start(30);
+             emit playStarted();
           }
        }
        else
        {
           qDebug() << "BASS_ChannelPlay unsuccess => already playing" ;
        }
-
     }
     else
     {
@@ -105,8 +108,9 @@ void QBassAudioFile::stop()
       {
          if ( BASS_ChannelStop( m_stream ) )
          {
-            m_state = EState::Stop;
+            m_state = EState::Stoped;
             m_timer->stop();
+            emit playStoped();
          }
          else
          {
@@ -117,6 +121,11 @@ void QBassAudioFile::stop()
       {
          qDebug() << "BASS_ChannelStop unsuccess 0 == m_stream" ;
       }
+   }
+   else if ( EState::Finished == m_state
+             || EState::Idle == m_state )
+   {
+      m_timer->stop();
    }
    else
    {
@@ -177,6 +186,10 @@ void QBassAudioFile::setFileName(const std::string &fileName)
             {
                 qDebug() << "Was not able to create stream from file" << fileName.c_str();
             }
+            else
+            {
+               BASS_ChannelSetSync( m_stream, BASS_SYNC_END, 0, QBassAudioFile::bassStreamFinishedSyncProc, this );
+            }
         }
         else
         {
@@ -225,4 +238,15 @@ void QBassAudioFile::setVolume(const float vol) const
       volume = 1.0f;
    }
    BASS_ChannelSetAttribute( m_stream, BASS_ATTRIB_VOL, volume);
+}
+
+void QBassAudioFile::bassStreamFinishedSyncProc(HSYNC , DWORD , DWORD , void *user)
+{
+   QBassAudioFile* audioFile = reinterpret_cast< QBassAudioFile* >( user );
+   audioFile->playFinishedEvent();
+}
+
+void QBassAudioFile::playFinishedEvent()
+{
+   emit playFinishedInternal();
 }

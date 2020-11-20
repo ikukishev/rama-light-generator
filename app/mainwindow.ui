@@ -44,12 +44,25 @@
       <attribute name="horizontalHeaderVisible">
        <bool>false</bool>
       </attribute>
+      <attribute name="horizontalHeaderDefaultSectionSize">
+       <number>100</number>
+      </attribute>
       <attribute name="verticalHeaderVisible">
        <bool>false</bool>
       </attribute>
       <column>
        <property name="text">
         <string>X</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>up</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>down</string>
        </property>
       </column>
       <column>
@@ -136,7 +149,7 @@
      <x>0</x>
      <y>0</y>
      <width>1306</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -156,7 +169,15 @@
     </property>
     <addaction name="actionChannel_configuration"/>
    </widget>
+   <widget class="QMenu" name="menuPlay">
+    <property name="title">
+     <string>Play</string>
+    </property>
+    <addaction name="actionStart_show"/>
+    <addaction name="actionRandom"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuPlay"/>
    <addaction name="menuSettings"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -183,6 +204,28 @@
   <action name="actionChannel_configuration">
    <property name="text">
     <string>Channel configuration</string>
+   </property>
+  </action>
+  <action name="actionStart_show">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Start show</string>
+   </property>
+  </action>
+  <action name="actionRandom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Random</string>
    </property>
   </action>
  </widget>

@@ -17,7 +17,7 @@ private:
 
 public:
 
-    enum class EState { Play, Stop };
+    enum class EState { Idle, Play, Stoped, Finished };
 
     ~QBassAudioFile();
 
@@ -42,11 +42,20 @@ public:
 
     const EState& state() const { return m_state; }
 
+
 Q_SIGNALS:
-    void processFinished();
+    void playStarted();
+    void playStoped();
+    void playFinished();
     void positionChanged(const SpectrumData& spectrum);
+    void playFinishedInternal();
 
 private:
+    static void CALLBACK bassStreamFinishedSyncProc(HSYNC, DWORD, DWORD, void *user );
+
+    void playFinishedEvent();
+private:
+
     std::string m_fileName;
     std::list< std::shared_ptr<SpectrumData> > m_spectrumData;
     QTimer * m_timer;

@@ -15,55 +15,16 @@ class MainWindow;
 
 
 
-class QLabelEx : public QLabel
-{
-    Q_OBJECT
-public:
-    explicit QLabelEx(QWidget *parent=nullptr, Qt::WindowFlags f=Qt::WindowFlags())
-        : QLabel( parent, f )
-    {}
-    explicit QLabelEx(const QString &text, QWidget *parent=nullptr, Qt::WindowFlags f=Qt::WindowFlags())
-        : QLabel( text, parent, f )
-    {}
-
-signals:
-    void clicked();
-
-protected:
-
-    virtual void mousePressEvent(QMouseEvent* event) override;
-
-};
-
-
-
-class QSliderEx : public QSlider
-{
-    Q_OBJECT
-public:
-    explicit QSliderEx(QWidget *parent = nullptr)
-        : QSlider( parent )
-    {}
-
-    explicit QSliderEx(Qt::Orientation orientation, QWidget *parent = nullptr)
-        : QSlider( orientation, parent )
-    {}
-
-signals:
-    void clicked();
-
-protected:
-
-    virtual void mousePressEvent(QMouseEvent* event) override;
-
-};
-
-
-
 class MainWindow : public QMainWindow
                  , public CConfigation
 {
     Q_OBJECT
+
+
+   enum class EMoveDirection
+   {
+      Up, Down
+   };
 
 public:
     explicit MainWindow( QWidget *parent = nullptr );
@@ -85,6 +46,10 @@ private slots:
 
     void on_actionChannel_configuration_triggered();
 
+    void on_actionRandom_triggered(bool checked);
+
+    void on_actionStart_show_triggered(bool checked);
+
 private:
 
     void adjustSequense( std::shared_ptr<CLightSequence>& seq );
@@ -99,7 +64,11 @@ private:
 
     void sequenseDeleted(std::weak_ptr<CLightSequence> thisObject);
 
+    void sequenseMove(std::weak_ptr<CLightSequence> thisObject, EMoveDirection direction);
+
     void sequensePlayStarted( std::weak_ptr<CLightSequence> thisObject);
+
+    void playNext();
 
 protected:
 
@@ -116,6 +85,7 @@ private:
     CLORSerialCtrl*                m_lorCtrl;
     CEffectEditorWidget*           m_effectConfiguration;
 
+    bool isShowStarted = false;
 
 };
 

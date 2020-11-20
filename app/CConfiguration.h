@@ -65,9 +65,9 @@ public:
       return result;
    }
 
-
 protected:
    QString   destinationFolder;
+   bool isPlayRandomEnabled = false;
 
 };
 

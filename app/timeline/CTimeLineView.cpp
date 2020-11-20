@@ -1,9 +1,11 @@
 #include <QGraphicsScene>
 #include <QMouseEvent>
 #include <QMenu>
+#include <QScrollBar>
 
 #include <QDebug>
 #include <QAction>
+#include <QTimer>
 
 #include "CTimeLineView.h"
 #include "CTimeLineEffect.h"
@@ -73,8 +75,20 @@ void CTimeLineView::mousePressEvent(QMouseEvent *event)
          }
       }
    }
+   else
+   {
+
+   }
 
    QGraphicsView::mousePressEvent( event );
+}
+
+void CTimeLineView::mouseDoubleClickEvent( QMouseEvent *event )
+{
+
+   indicator->setPosition( convertSceneXToPosition( mapToScene( event->pos() ).x() ) );
+
+   QGraphicsView::mouseDoubleClickEvent( event );
 }
 
 void CTimeLineView::mouseMoveEvent( QMouseEvent *event )
@@ -134,7 +148,10 @@ void CTimeLineView::wheelEvent(QWheelEvent *event)
    {
       auto steps = event->angleDelta().x() / 8.0f;
       setScale( m_scale + ( steps / 720.f ) );
+      centerOn(indicator->scenePos().x(), sceneRect().center().y());
       updateSceneRect();
+
+
    }
    update();
 
@@ -174,6 +191,39 @@ void CTimeLineView::updateSceneRect()
    }
 
    indicator->updateScenePosition();
+
+}
+
+void CTimeLineView::animateBy(int x)
+{
+   float updateFrequency = (1000/30.0); // ~30 frames per second
+
+   QPointF currScenePos = sceneRect().center();
+
+   int curX = currScenePos.x();
+   int endPos = curX + x;
+
+   int distanceToAnimate = (endPos - curX);
+
+   // speed = dist / time
+   float updatePosInterval = (float)distanceToAnimate / updateFrequency;
+
+   printf("updatePosInterval: %f \n", updatePosInterval);
+
+   static float newXPos = sceneRect().center().x();
+
+   QTimer* pTimer = new QTimer;
+   QObject::connect(pTimer, &QTimer::timeout, [=](){
+      newXPos += updatePosInterval;
+      centerOn(newXPos, sceneRect().center().y());
+      // check for end position or time, then....
+      if(newXPos >= endPos)
+      {
+         pTimer->stop();
+         pTimer->deleteLater();
+      }
+   });
+   pTimer->start(updateFrequency);
 
 }
 
@@ -335,11 +385,14 @@ void CTimeLineView::setChannelHeight(uint32_t &&ch)
 
 void CTimeLineView::setCompositionDuration( int64_t length )
 {
-   if ( length > 0 )
+   if ( length > 0 && length != m_compositionDuration )
    {
       m_compositionDuration = length;
       setCompositionPosition( 0 );
-      indicator->setPosition( 0 );
+      if ( indicator->position() > length )
+      {
+         indicator->setPosition( 0 );
+      }
       update();
    }
 }

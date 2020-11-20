@@ -1,5 +1,6 @@
 #include "clightsequence.h"
 #include <QPushButton>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QIcon>
 #include <QCheckBox>
@@ -9,6 +10,7 @@
 #include <QFileInfo>
 #include <QDebug>
 #include <QJsonArray>
+#include <QSizePolicy>
 #include "csequensegenerator.h"
 
 
@@ -42,7 +44,7 @@ CLightSequence::CLightSequence(const std::string &fileName, const CConfigation &
     , m_audioFile( nullptr )
     , m_isGenerateStarted( false )
 {
-    adjust();
+    m_audioFile = QBassAudioFile::get(m_fileName);
 }
 
 
@@ -51,33 +53,33 @@ CLightSequence::~CLightSequence()
     destroy();
 }
 
-CLightSequence::CLightSequence(const std::string &fileName,
-                               const CConfigation &configuration,
-                               std::list<std::shared_ptr<CLightSequence::SequenceChannelConfigation> > &&channelConfiguration)
-    : QObject( nullptr )
-    , m_configuration( configuration )
-    , m_fileName( fileName )
-    , m_audioFile( nullptr )
-    , m_channelConfiguration( std::move( channelConfiguration ) )
-    , m_isGenerateStarted( false )
+std::vector<QWidget *> CLightSequence::getControlWidgets()
 {
-    adjust();
-}
-
-void CLightSequence::adjust()
-{
-   m_audioFile = QBassAudioFile::get(m_fileName);
+   std::vector<QWidget*> controlWidgets;
+   m_conncetionToDestroy.clear();
    if ( nullptr == m_audioFile )
    {
       qDebug() << "Was not able to create audio file";
-      return;
+      return controlWidgets;
    }
 
    //*************************************************************
-
-   auto deleteButton = new QPushButton("X");
-   connect(deleteButton, &QPushButton::clicked, [this](bool /*checked*/){
+   auto deleteButton = new QPushButton(  );
+   deleteButton->setIcon( QIcon( ":/qss_icons/rc/window_close_focus.png" ) );
+   connect(deleteButton, &QPushButton::clicked, [this]( bool/*checked*/){
       emit deleteTriggered( shared_from_this() );
+   });
+
+   auto upButton = new QPushButton( );
+   upButton->setIcon( QIcon( ":/qss_icons/rc/arrow_up_focus.png" ) );
+   connect(upButton, &QPushButton::clicked, [this](bool /*checked*/){
+      emit moveUp( shared_from_this() );
+   });
+
+   auto downButton = new QPushButton( );
+   downButton->setIcon( QIcon( ":/qss_icons/rc/arrow_down_focus.png" ) );
+   connect(downButton, &QPushButton::clicked, [this](bool /*checked*/){
+      emit moveDown( shared_from_this() );
    });
 
    //*************************************************************
@@ -107,6 +109,7 @@ void CLightSequence::adjust()
 
    auto trackPosition = new QSlider( Qt::Horizontal );
    trackPosition->setMaximum( m_audioFile->duration() );
+   trackPosition->setValue( m_audioFile->position() );
    trackPosition->setMinimum(0);
 
    auto playPositionChanging = [this, trackPosition, cacProgressLabel, durationLabel](const SpectrumData& spectrum){
@@ -128,13 +131,15 @@ void CLightSequence::adjust()
       m_audioFile->setPosition( trackPosition->value() );
    });
 
+   m_conncetionToDestroy.push_back( connectionPtr );
+
    //*************************************************************
 
 
    auto playButton = new QPushButton();
    playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
 
-   auto playButtonClickedEvent = [this, playButton ](bool /*checked*/) {
+   auto playButtonClickedEvent = [this]( bool ) {
 
        if ( isGenerateStarted() )
        {
@@ -144,24 +149,36 @@ void CLightSequence::adjust()
        if ( QBassAudioFile::EState::Play == m_audioFile->state() )
        {
           m_audioFile->stop();
-          playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
        }
-       else if ( QBassAudioFile::EState::Stop == m_audioFile->state() )
+       else
        {
           m_audioFile->play();
-          playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPause) );
-          emit playStarted( shared_from_this() );
-          sPlayEventDistributor.sendSequenseEvent( this );
        }
-
    };
 
    connect(playButton, &QPushButton::clicked, playButtonClickedEvent );
 
-   connect( m_audioFile.get(), &QBassAudioFile::processFinished, [this, playButton](){
-        playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
-        emit playFinished( shared_from_this() );
-   });
+   m_conncetionToDestroy.push_back( std::shared_ptr<QMetaObject::Connection>(
+               new QMetaObject::Connection( connect( m_audioFile.get(), &QBassAudioFile::playStarted, [this, playButton](){
+      playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPause) );
+      sPlayEventDistributor.sendSequenseEvent( this );
+      emit playStarted( shared_from_this() );
+   })), deleter ));
+
+
+   m_conncetionToDestroy.push_back( std::shared_ptr<QMetaObject::Connection>(
+               new QMetaObject::Connection( connect( m_audioFile.get(), &QBassAudioFile::playStoped, [this, playButton](){
+      playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
+      emit playStoped( shared_from_this() );
+   })), deleter ));
+
+
+   m_conncetionToDestroy.push_back( std::shared_ptr<QMetaObject::Connection>(
+               new QMetaObject::Connection( connect( m_audioFile.get(), &QBassAudioFile::playFinished, [this, playButton](){
+      playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
+      qDebug() << "emit emit playFinished( shared_from_this() );" ;
+      emit playFinished( shared_from_this() );
+   })), deleter ));
 
 
    m_conncetionToDestroy.push_back( std::shared_ptr<QMetaObject::Connection>(
@@ -180,7 +197,7 @@ void CLightSequence::adjust()
    auto trackVolume = new QSlider( Qt::Horizontal );
    trackVolume->setMaximum( 100 );
    trackVolume->setMinimum( 0 );
-   trackVolume->setValue( 100 );
+   trackVolume->setValue( m_audioFile->getVolume() * 100 );
 
    connect(trackVolume, &QAbstractSlider::valueChanged, [this]( int value ){
          m_audioFile->setVolume( float(value)/100.0f );
@@ -190,19 +207,47 @@ void CLightSequence::adjust()
 
    std::shared_ptr<QMetaObject::Connection> connectionFinishPtr( new QMetaObject::Connection(), deleter );
 
+   m_conncetionToDestroy.push_back( connectionFinishPtr );
+
+   auto genStop = [=]()
+   {
+      playButton->setDisabled(false);
+      trackPosition->setDisabled(false);
+      deleteButton->setDisabled(false);
+      m_isGenerateStarted = false;
+      disconnect(*connectionFinishPtr);
+      m_audioFile->stop();
+   };
+
+   auto getStart = [=]()
+   {
+      playButton->setDisabled(true);
+      trackPosition->setDisabled(true);
+      deleteButton->setDisabled(true);
+      trackVolume->setValue(0);
+      labelStatus->setText("Started");
+
+      (*connectionFinishPtr) = connect( m_audioFile.get(), &QBassAudioFile::playFinished, [ this, genStop, labelStatus, trackVolume ](){
+         if ( CSequenseGenerator::generateLms( this ) )
+         {
+             labelStatus->setText("Done");
+         }
+         else
+         {
+             labelStatus->setText("Done with error");
+         }
+         trackVolume->setValue(100);
+         m_audioFile->setVolume(1.0f);
+         emit processFinished();
+         genStop();
+      });
+
+   };
+
+
    auto startButton = new QPushButton("Generate");
    startButton->setIcon(QIcon(":/images/record.png"));
-   connect(startButton, &QPushButton::clicked, [ this, playButton, trackPosition,
-           deleteButton, connectionFinishPtr, labelStatus, trackVolume ](bool){
-
-      auto genStop = [=]()
-      {
-         playButton->setDisabled(false);
-         trackPosition->setDisabled(false);
-         deleteButton->setDisabled(false);
-         m_isGenerateStarted = false;
-         disconnect(*connectionFinishPtr);
-      };
+   connect(startButton, &QPushButton::clicked, [ this, connectionFinishPtr, labelStatus, genStop, getStart ](bool){
 
       if ( m_isGenerateStarted )
       {
@@ -211,48 +256,52 @@ void CLightSequence::adjust()
       }
       else
       {
-         playButton->setDisabled(true);
-         trackPosition->setDisabled(true);
-         deleteButton->setDisabled(true);
-         m_isGenerateStarted = true;
          m_audioFile->resetFFTData();
          m_audioFile->setVolume(0.0f);
-         trackVolume->setValue(0);
          m_audioFile->play();
-         labelStatus->setText("Started");
+         m_isGenerateStarted = true;
          emit generationStarted();
-
-         (*connectionFinishPtr) = connect( m_audioFile.get(), &QBassAudioFile::processFinished, [ this, genStop, labelStatus ](){
-            if ( CSequenseGenerator::generateLms( this ) )
-            {
-                labelStatus->setText("Done");
-            }
-            else
-            {
-                labelStatus->setText("Done with error");
-            }
-            emit processFinished();
-            genStop();
-
-         });
+         getStart();
       }
    });
 
+   if ( m_isGenerateStarted )
+   {
+      getStart();
+   }
+
    //*************************************************************
 
-   m_controlWidgets.clear();
-   m_controlWidgets.reserve(8);
+   controlWidgets.clear();
+   controlWidgets.reserve(10);
 
-   m_controlWidgets.push_back( deleteButton );
-   m_controlWidgets.push_back( label );
-   m_controlWidgets.push_back( playButton );
-   m_controlWidgets.push_back( startButton );
-   m_controlWidgets.push_back( trackPosition );
-   m_controlWidgets.push_back( durationLabel );
-   m_controlWidgets.push_back( trackVolume );
-   m_controlWidgets.push_back( labelStatus );
+   controlWidgets.push_back( deleteButton );
+   controlWidgets.push_back( upButton );
+   controlWidgets.push_back( downButton );
+   controlWidgets.push_back( label );
+   controlWidgets.push_back( playButton );
+   controlWidgets.push_back( startButton );
+   controlWidgets.push_back( trackPosition );
+   controlWidgets.push_back( durationLabel );
+   controlWidgets.push_back( trackVolume );
+   controlWidgets.push_back( labelStatus );
 
+   return controlWidgets;
 }
+
+CLightSequence::CLightSequence(const std::string &fileName,
+                               const CConfigation &configuration,
+                               std::list<std::shared_ptr<CLightSequence::SequenceChannelConfigation> > &&channelConfiguration)
+    : QObject( nullptr )
+    , m_configuration( configuration )
+    , m_fileName( fileName )
+    , m_audioFile( nullptr )
+    , m_channelConfiguration( std::move( channelConfiguration ) )
+    , m_isGenerateStarted( false )
+{
+   m_audioFile = QBassAudioFile::get(m_fileName);
+}
+
 
 void CLightSequence::destroy()
 {
@@ -263,7 +312,6 @@ void CLightSequence::destroy()
       m_audioFile = nullptr;
    }
 
-   m_controlWidgets.clear();
    m_conncetionToDestroy.clear();
    qDebug() << __FUNCTION__ << m_fileName.c_str();
 }
@@ -504,3 +552,15 @@ std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::Sequ
 }
 
 
+
+void QLabelEx::mousePressEvent(QMouseEvent *event)
+{
+   emit clicked();
+   QLabel::mousePressEvent(event);
+}
+
+void QSliderEx::mousePressEvent(QMouseEvent *event)
+{
+   emit clicked();
+   QSlider::mousePressEvent(event);
+}

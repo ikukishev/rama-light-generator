@@ -15,15 +15,13 @@ public:
     CTimeLineView(QWidget *parent = nullptr);
     
     virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseDoubleClickEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
 
     void AddItem(QPointF pos, QRect rect, QPen pen, QBrush brush);
 
 signals:
-    void sendMousePressEventSignal(QMouseEvent *event);
-    void sendMouseMoveEventSignal(QMouseEvent *event);
-    void sendMouseReleaseEventSignal(QMouseEvent *event);
     void playFromPosition(CTimeLineView* view, uint64_t position);
 
     // QWidget interface
@@ -40,6 +38,7 @@ protected:
 private:
 
     void updateSceneRect();
+    void animateBy(int x);
 
     // ITimeLineTrackViev interface
 public:

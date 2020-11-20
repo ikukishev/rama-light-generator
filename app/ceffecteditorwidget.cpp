@@ -126,11 +126,19 @@ void CEffectEditorWidget::setCurrentSequense(std::weak_ptr<CLightSequence> seque
 
    m_spectrumConnections.push_back(
             std::shared_ptr<QMetaObject::Connection>(
-               new QMetaObject::Connection( connect( timeline, &CTimeLineView::playFromPosition, [this](CTimeLineView* view, uint64_t position){
+               new QMetaObject::Connection( connect( timeline, &CTimeLineView::playFromPosition, [this](CTimeLineView* , uint64_t position){
                                                auto sequensePtr = currentSequense.lock();
                                                if ( nullptr != sequensePtr )
                                                {
                                                   sequensePtr->getAudioFile()->setPosition( position );
+                                                  if ( QBassAudioFile::EState::Play != sequensePtr->getAudioFile()->state() )
+                                                  {
+                                                     sequensePtr->getAudioFile()->play();
+                                                  }
+                                                  else
+                                                  {
+                                                     sequensePtr->getAudioFile()->stop();
+                                                  }
                                                }
                                             } ) ), deleter )
             );

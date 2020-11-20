@@ -15,20 +15,10 @@
 const QString cSequenseConfigurationFileName( "sequenseConfiguration.json" );
 
 const QString cKeyOutputDirectory( "outputDir" );
+const QString cKeyPlayRandom( "isRandomPlay" );
 const QString cKeySequenses( "sequenses" );
 
 
-void QLabelEx::mousePressEvent(QMouseEvent *event)
-{
-    emit clicked();
-    QLabel::mousePressEvent(event);
-}
-
-void QSliderEx::mousePressEvent(QMouseEvent *event)
-{
-    emit clicked();
-    QSlider::mousePressEvent(event);
-}
 
 MainWindow::MainWindow( QWidget *parent )
     : QMainWindow( parent )
@@ -42,8 +32,8 @@ MainWindow::MainWindow( QWidget *parent )
 {
     ui->setupUi(this);
     QHeaderView * header = ui->tableWidget->horizontalHeader();
-    header->setSectionResizeMode(1, QHeaderView::Stretch);
-    header->setSectionResizeMode(4, QHeaderView::Stretch);
+    header->setSectionResizeMode(3, QHeaderView::Stretch);
+    header->setSectionResizeMode(6, QHeaderView::Stretch);
 
     header = ui->tableWidget_2->horizontalHeader();
     header->setSectionResizeMode(1, QHeaderView::Stretch);
@@ -84,6 +74,7 @@ MainWindow::MainWindow( QWidget *parent )
     m_effectConfiguration->setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint );;
     m_effectConfiguration->show();
 
+    std::srand(std::time(NULL));
 
 }
 
@@ -125,6 +116,7 @@ void MainWindow::persist()
 
     QJsonObject config;
     config[ cKeyOutputDirectory ] = destinationFolder;
+    config[ cKeyPlayRandom ] = isPlayRandomEnabled;
     config[ cKeySequenses ] = sequenseArray;
 
     persistFile.write( QJsonDocument(config).toJson() );
@@ -160,6 +152,19 @@ void MainWindow::load()
             }
         }
 
+        if ( json.contains( cKeyPlayRandom ) )
+        {
+            if ( !json[ cKeyPlayRandom  ].isBool() )
+            {
+                qWarning() << "Output directory is not a boolean type: " << cKeyPlayRandom  ;
+            }
+            else
+            {
+                isPlayRandomEnabled = json[ cKeyPlayRandom  ].toBool();
+                ui->actionRandom->setChecked( isPlayRandomEnabled );
+            }
+        }
+
         if (json.contains( cKeySequenses ))
         {
             QJsonArray seqJson( json[ cKeySequenses ].toArray() );
@@ -174,7 +179,7 @@ void MainWindow::load()
                     if ( seqPtr )
                     {
                         adjustSequense( seqPtr );
-                        m_sequences.push_back(seqPtr);
+                        m_sequences.push_back( seqPtr );
                     }
                 }
                 else
@@ -188,16 +193,16 @@ void MainWindow::load()
             channelConfigurationChanged();
             updateTable();
         }
-
     }
 }
 
 void MainWindow::updateTable()
 {
+   ui->tableWidget->clear();
     ui->tableWidget->setRowCount(m_sequences.size());
     for ( std::size_t i = 0; i < m_sequences.size(); ++i )
     {
-       auto& widgets = m_sequences[i]->getControlWidgets();
+       auto widgets = m_sequences[i]->getControlWidgets();
        for ( std::size_t j = 0; j < widgets.size(); ++j )
        {
            ui->tableWidget->setCellWidget( i, j, widgets[j] );
@@ -236,8 +241,50 @@ void MainWindow::sequenseDeleted( std::weak_ptr<CLightSequence> thisObject)
 
 }
 
+void MainWindow::sequenseMove(std::weak_ptr<CLightSequence> thisObject, EMoveDirection direction)
+{
+
+   auto sequense = thisObject.lock();
+   if ( nullptr == sequense )
+   {
+       return;
+   }
+
+   std::size_t i = 0;
+   auto it = m_sequences.begin();
+   for ( ; i < m_sequences.size(); ++i, ++it)
+   {
+      if ( m_sequences[i] == sequense )
+      {
+         break;
+      }
+   }
+
+   if ( i > 0 && EMoveDirection::Up == direction )
+   {
+      auto old = m_sequences[ i-1 ];
+      m_sequences[ i-1 ] = sequense;
+      m_sequences[ i ] = old;
+
+      updateTable();
+   }
+   else if ( i < m_sequences.size()-1 && EMoveDirection::Down == direction )
+   {
+      auto old = m_sequences[ i+1 ];
+      m_sequences[ i+1 ] = sequense;
+      m_sequences[ i ] = old;
+
+      updateTable();
+   }
+
+}
+
 void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
 {
+    if ( m_current.lock() == thisObject.lock() )
+    {
+       return;
+    }
 
     ui->tableWidget_2->clear();
     QStringList labels;
@@ -251,7 +298,6 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
     auto sequense = thisObject.lock();
     if ( nullptr == sequense )
     {
-
         ui->tableWidget_2->setRowCount(0);
         m_spectrumConnection = nullptr;
         return;
@@ -367,6 +413,102 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
 
 }
 
+void MainWindow::playNext()
+{
+   if ( !isShowStarted )
+   {
+      return;
+   }
+
+   auto current = m_current.lock();
+   if ( nullptr != current )
+   {
+      if ( QBassAudioFile::EState::Play == current->getAudioFile()->state() && !current->isGenerateStarted() )
+      {
+         return;
+      }
+   }
+
+   auto notGeneratedIndexes = [this]()
+   {
+      std::vector<std::size_t> list;
+
+      for ( std::size_t i = 0;  i < m_sequences.size(); ++i )
+      {
+         if ( !m_sequences[i]->isGenerateStarted() )
+         {
+            list.push_back( i );
+         }
+      }
+
+      return list;
+   };
+
+   if ( isPlayRandomEnabled )
+   {
+      auto list = notGeneratedIndexes();
+
+      if ( !list.empty() )
+      {
+         int index = std::rand() % list.size();
+         current = m_sequences[ list[ index ] ];
+      }
+
+   }
+   else if ( nullptr == current )
+   {
+      if ( m_sequences.empty() )
+      {
+         return;
+      }
+      else
+      {
+         current = m_sequences[0];
+      }
+   }
+   else
+   {
+      std::size_t var = 0;
+      for ( ; var < m_sequences.size(); ++var)
+      {
+         if ( m_sequences[var] == current )
+         {
+            break;
+         }
+      }
+
+      auto list = notGeneratedIndexes();
+      if ( !list.empty() )
+      {
+         auto nextIndex = -1;
+         for ( std::size_t index = 0; index < list.size(); ++index )
+         {
+            if ( list[index] > var )
+            {
+               nextIndex = list[index];
+               break;
+            }
+         }
+
+         if ( -1 != nextIndex )
+         {
+            current = m_sequences[ nextIndex ];
+         }
+         else
+         {
+            current = m_sequences[ list[0] ];
+         }
+      }
+
+   }
+
+   if ( nullptr != current )
+   {
+
+         current->getAudioFile()->play();
+   }
+}
+
 void MainWindow::closeEvent(QCloseEvent *)
 {
    qDebug() << __FUNCTION__;
@@ -441,7 +583,40 @@ void MainWindow::adjustSequense( std::shared_ptr<CLightSequence> &seq )
     {
         connect( seq.get(), &CLightSequence::deleteTriggered, this, &MainWindow::sequenseDeleted     );
         connect( seq.get(), &CLightSequence::playStarted,     this, &MainWindow::sequensePlayStarted );
+        connect( seq.get(), &CLightSequence::moveUp,          [this](std::weak_ptr<CLightSequence> thisObject)
+        {
+            sequenseMove( thisObject, EMoveDirection::Up );
+        });
+        connect( seq.get(), &CLightSequence::moveDown,        [this](std::weak_ptr<CLightSequence> thisObject)
+        {
+            sequenseMove( thisObject, EMoveDirection::Down );
+        });
+
+        connect( seq.get(), &CLightSequence::playFinished,    [this](std::weak_ptr<CLightSequence> thisObject)
+        {
+           qDebug() << "Play Finished";
+            playNext();
+        });
     }
 }
 
 
+
+void MainWindow::on_actionRandom_triggered(bool checked)
+{
+   isPlayRandomEnabled = checked;
+}
+
+
+void MainWindow::on_actionStart_show_triggered(bool checked)
+{
+   if ( !isShowStarted )
+   {
+      isShowStarted = checked;
+      playNext();
+   }
+   else
+   {
+      isShowStarted = checked;
+   }
+}
