@@ -30,7 +30,7 @@ public:
     uint32_t unit;
     uint32_t channel;
     uint32_t voltage;
-    uint32_t spectrumIndex;
+    uint32_t spectrumIndex=2;
     double multipler;
     QString color;
     QUuid uuid;

@@ -120,7 +120,7 @@ public:
       std::shared_ptr< uint32_t > spectrumIndex;
       std::shared_ptr< double > gain;
       double minimumLevel = 0.0;
-      double fading = 1.0;
+      double fading = 3.0;
       std::map< QUuid, std::shared_ptr<IEffectGenerator> > effects;
    };
 

@@ -518,7 +518,6 @@ QLabel *ChannelConfigurator::prepareUUIDLabel(const QUuid &uuid)
 
 bool ChannelConfigurator::isTableDataValid() const
 {
-
     bool isValid = true;
 
     for ( int rowIndex = 0; rowIndex < ui->tableWidget->rowCount(); ++rowIndex)

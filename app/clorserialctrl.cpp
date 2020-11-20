@@ -161,10 +161,20 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
 
 void CLORSerialCtrl::writeHeartbeatData()
 {
+    if ( QSerialPort::NoError != m_serial.error() )
+    {
+        qDebug() << "Serial port error:" << m_serial.error() << m_serial.errorString();
+        if ( isOpen() )
+        {
+            m_serial.close();
+        }
+    }
+
     if ( !isOpen() )
     {
         m_serial.open( QIODevice::WriteOnly );
     }
+
 
     if ( isOpen() )
     {

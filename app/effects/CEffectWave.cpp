@@ -2,6 +2,7 @@
 #include <QVBoxLayout>
 #include <QSlider>
 #include <QLabel>
+#include <cmath>
 
 #include "CEffectWave.h"
 
