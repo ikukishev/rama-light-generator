@@ -34,10 +34,17 @@ QBassAudioFile::QBassAudioFile()
 QBassAudioFile::~QBassAudioFile()
 {
    qDebug() << __FUNCTION__ << m_fileName.c_str();
-   stop();
+   if ( EState::Play == state() )
+   {
+      if ( 0 != m_stream )
+      {
+         BASS_ChannelStop( m_stream );
+      }
+   }
 
    if ( m_timer != nullptr )
    {
+      m_timer->stop();
       delete m_timer;
       m_timer = nullptr;
    }

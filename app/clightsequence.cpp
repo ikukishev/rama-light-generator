@@ -314,14 +314,12 @@ CLightSequence::CLightSequence(const std::string &fileName,
 
 void CLightSequence::destroy()
 {
+   m_conncetionToDestroy.clear();
    if ( m_audioFile )
    {
-      m_audioFile->resetFFTData();
       m_audioFile.reset();
       m_audioFile = nullptr;
    }
-
-   m_conncetionToDestroy.clear();
    qDebug() << __FUNCTION__ << m_fileName.c_str();
 }
 
