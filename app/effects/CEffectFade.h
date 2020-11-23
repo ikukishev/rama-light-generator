@@ -2,6 +2,7 @@
 #define CEFFECTFADE_H
 
 #include "timeline/IEffectGenerator.h"
+#include "constants.h"
 
 class CEffectFade: public IEffectGenerator
 {

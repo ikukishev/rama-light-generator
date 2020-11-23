@@ -4,12 +4,15 @@
 #include <QDebug>
 #include <QFile>
 #include <QMessageBox>
+#include <QComboBox>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QMenu>
 #include <QColorDialog>
 #include <QPushButton>
+#include "widgets/FloatSliderWidget.h"
+#include "constants.h"
 
 const std::string configuration("channelConfiguration.json");
 
@@ -20,13 +23,24 @@ const QString cKeyUnit( "Unit" );
 const QString cKeyChannel( "Channel" );
 const QString cKeyVoltage( "Voltage" );
 const QString cKeySpectrumBarIndex( "SpectrumBarIndex" );
-const QString cKeyMultipler( "Multipler" );
+const QString cKeyGain( "Gain" );
+const QString cKeyFade( "Fade" );
 const QString cKeyColor( "Color" );
 const QString cKeyUUID( "uuid" );
 const QString cKeyPortName( "commPortName" );
 const QString cKeyPortBaudRate( "commPortBaudRate" );
 
 const uint32_t cDefaultBaudRate( 115200 );
+
+constexpr int cColumnIndexLabel   = 0;
+constexpr int cColumnIndexUnit    = 1;
+constexpr int cColumnIndexChannel = 2;
+constexpr int cColumnIndexVoltage = 3;
+constexpr int cColumnIndexSpectrumBarIndex = 4;
+constexpr int cColumnIndexGain    = 5;
+constexpr int cColumnIndexFade = 6;
+constexpr int cColumnIndexColor = 7;
+constexpr int cColumnIndexUuid = 8;
 
 
 
@@ -38,9 +52,12 @@ ChannelConfigurator::ChannelConfigurator(QWidget *parent)
 {
    ui->setupUi(this);
     connect(ui->tableWidget, &QTableWidget::customContextMenuRequested, this, &ChannelConfigurator::on_tableWidget_customContextMenuRequested);
+
+    ui->tableWidget->setColumnCount(9);
     QHeaderView * header = ui->tableWidget->horizontalHeader();
-    header->setSectionResizeMode(0, QHeaderView::Stretch);
-    header->setSectionResizeMode(7, QHeaderView::Stretch);
+
+    header->setSectionResizeMode( cColumnIndexLabel, QHeaderView::Stretch);
+    header->setSectionResizeMode( cColumnIndexUuid, QHeaderView::Stretch);
    load();
 }
 
@@ -52,29 +69,14 @@ ChannelConfigurator::~ChannelConfigurator()
 QDialog::DialogCode ChannelConfigurator::display()
 {
     updateTableData();
-    if ( ui->tableWidget->rowCount() == 0)
+    if ( ui->tableWidget->rowCount() == 0 )
     {
-        ui->tableWidget->setRowCount(1);
-        ui->tableWidget->setCellWidget(0, 6, prepareColorButton( QColorConstants::Red ));
-        ui->tableWidget->setCellWidget(0, 7, prepareUUIDLabel( QUuid::createUuid() ));
+        ui->tableWidget->setRowCount( 1 );
+        ui->tableWidget->setCellWidget( 0, cColumnIndexColor, prepareColorButton( QColorConstants::Red ));
+        ui->tableWidget->setCellWidget( 0, cColumnIndexUuid, prepareUUIDLabel( QUuid::createUuid() ));
     }
     setEnableOkButton(isTableDataValid());
     auto result = static_cast< QDialog::DialogCode >( exec() );
-
-//    for ( int rowIndex = 0; rowIndex < (int)m_channels.size(); ++rowIndex)
-//    {
-//       auto button = ui->tableWidget->cellWidget(rowIndex, 6);
-//       if ( button)
-//       {
-//          delete button;
-//       }
-//       auto label = ui->tableWidget->cellWidget(rowIndex, 7);
-//       if ( label )
-//       {
-//          delete label;
-//       }
-
-//    }
 
     return result;
 }
@@ -168,17 +170,32 @@ void ChannelConfigurator::load()
                         }
                     }
 
-                    double Multipler;
-                    if ( jsonChannel.contains( cKeyMultipler ) )
+                    double Gain;
+                    if ( jsonChannel.contains( cKeyGain ) )
                     {
-                        if ( !jsonChannel[ cKeyMultipler ].isDouble() )
+                        if ( !jsonChannel[ cKeyGain ].isDouble() )
                         {
-                            Multipler = 1.0;
-                            qWarning() << "Channel Multipler '" << cKeyMultipler << "' is wrong";
+                            Gain = 1.0;
+                            qWarning() << "Channel Multipler '" << cKeyGain << "' is wrong";
                         }
                         else
                         {
-                            Multipler = jsonChannel[ cKeyMultipler ].toDouble();
+                            Gain = jsonChannel[ cKeyGain ].toDouble();
+                        }
+                    }
+
+
+                    double Fade;
+                    if ( jsonChannel.contains( cKeyFade ) )
+                    {
+                        if ( !jsonChannel[ cKeyFade ].isDouble() )
+                        {
+                            Fade = 1.0;
+                            qWarning() << "Channel Fade '" << cKeyFade << "' is wrong";
+                        }
+                        else
+                        {
+                            Fade = jsonChannel[ cKeyFade ].toDouble();
                         }
                     }
 
@@ -210,7 +227,7 @@ void ChannelConfigurator::load()
                         }
                     }
 
-                    channelsTmp.emplace_back(label, unit, ChannelNumber, Voltage, SpectrumBarIndex, Multipler, color, uuid);
+                    channelsTmp.emplace_back(label, unit, ChannelNumber, Voltage, SpectrumBarIndex, Gain, Fade, color, uuid);
 
                 }
                 else
@@ -276,7 +293,8 @@ void ChannelConfigurator::persist()
         jsonObject[ cKeyChannel ] = static_cast<int>(channel.channel);
         jsonObject[ cKeyVoltage ] = static_cast<int>(channel.voltage);
         jsonObject[ cKeySpectrumBarIndex ] = static_cast<int>(channel.spectrumIndex);
-        jsonObject[ cKeyMultipler ] = channel.multipler;
+        jsonObject[ cKeyGain ] = channel.gain;
+        jsonObject[ cKeyFade ] = channel.fade;
         jsonObject[ cKeyColor ] = channel.color;
         jsonObject[ cKeyUUID ] = channel.uuid.toString();
         jsonChannelsArray.append(jsonObject);
@@ -300,7 +318,8 @@ void ChannelConfigurator::updateTableData()
    labels << "Channel";
    labels << "Voltage";
    labels << "SpectrumBar index";
-   labels << "Multipler";
+   labels << "Gain";
+   labels << "Fade";
    labels << "Color";
    labels << "UUID";
 
@@ -309,25 +328,28 @@ void ChannelConfigurator::updateTableData()
 
     for ( int rowIndex = 0; rowIndex < (int)m_channels.size(); ++rowIndex)
     {
-        ui->tableWidget->setItem(rowIndex, 0, new QTableWidgetItem( m_channels[rowIndex].label) );
+        ui->tableWidget->setItem(rowIndex, cColumnIndexLabel, new QTableWidgetItem( m_channels[rowIndex].label) );
 
         if (m_channels[rowIndex].unit > 0)
-            ui->tableWidget->setItem(rowIndex, 1, new QTableWidgetItem( QString::number(m_channels[rowIndex].unit)) );
+            ui->tableWidget->setItem(rowIndex, cColumnIndexUnit, new QTableWidgetItem( QString::number(m_channels[rowIndex].unit)) );
 
         if (m_channels[rowIndex].channel > 0)
-            ui->tableWidget->setItem(rowIndex, 2, new QTableWidgetItem( QString::number(m_channels[rowIndex].channel)) );
+            ui->tableWidget->setItem(rowIndex, cColumnIndexChannel, new QTableWidgetItem( QString::number(m_channels[rowIndex].channel)) );
 
         if (m_channels[rowIndex].voltage > 0)
-            ui->tableWidget->setItem(rowIndex, 3, new QTableWidgetItem( QString::number(m_channels[rowIndex].voltage)) );
+        {
+            ui->tableWidget->setItem(rowIndex, cColumnIndexVoltage, new QTableWidgetItem( QString::number(m_channels[rowIndex].voltage)) );
+        }
+        else
+        {
+            ui->tableWidget->setItem(rowIndex, cColumnIndexVoltage, new QTableWidgetItem( QString::number(220) ) );
+        }
 
-        if (m_channels[rowIndex].spectrumIndex > 0)
-            ui->tableWidget->setItem(rowIndex, 4, new QTableWidgetItem( QString::number(m_channels[rowIndex].spectrumIndex)) );
-
-        qDebug() << "rowIndex:" << rowIndex << "Multipler:" << m_channels[rowIndex].multipler;
-        ui->tableWidget->setItem(rowIndex, 5, new QTableWidgetItem( QString::number(m_channels[rowIndex].multipler)) );
-
-        ui->tableWidget->setCellWidget( rowIndex, 6, prepareColorButton( m_channels[rowIndex].color ) );
-        ui->tableWidget->setCellWidget( rowIndex, 7, prepareUUIDLabel( m_channels[rowIndex].uuid ) );
+        ui->tableWidget->setCellWidget( rowIndex, cColumnIndexSpectrumBarIndex, prepareSpectrumCombo( m_channels[rowIndex].spectrumIndex ) );
+        ui->tableWidget->setCellWidget( rowIndex, cColumnIndexGain, new FloatSliderWidget( cMaxGainValue, cMinGainValue, m_channels[rowIndex].gain ) );
+        ui->tableWidget->setCellWidget( rowIndex, cColumnIndexFade, new FloatSliderWidget( cMaxFadeValue, cMinFadeValue, m_channels[rowIndex].fade ) );
+        ui->tableWidget->setCellWidget( rowIndex, cColumnIndexColor, prepareColorButton( m_channels[rowIndex].color ) );
+        ui->tableWidget->setCellWidget( rowIndex, cColumnIndexUuid, prepareUUIDLabel( m_channels[rowIndex].uuid ) );
 
     }
 
@@ -386,81 +408,56 @@ void ChannelConfigurator::updateChannelsValue()
         return result;
     };
 
-    auto getDouble = [ this, &getText ] ( int rowIndex, int colIndex, double& val) -> bool
-    {
-        QString  text;
-        bool result = false;
-        if ( !getText( rowIndex, colIndex, text ) )
-        {
-            return result;
-        }
-
-        double value = text.toDouble( &result );
-        if ( result )
-        {
-            val = value;
-        }
-        else
-        {
-            QMessageBox::warning( this, "Warning", QString("col: ").append( QString::number(colIndex) )
-                                  .append(" row: ").append(  QString::number( rowIndex )  )
-                                  .append(" wrong float value. must be > 0")  );
-        }
-        return result;
-    };
-
     for ( int rowIndex = 0; rowIndex < ui->tableWidget->rowCount(); ++rowIndex)
     {
 
         QString  label;
-        if ( !getText( rowIndex, 0, label) )
+        if ( !getText( rowIndex, cColumnIndexLabel, label) )
         {
             continue;
         }
 
         uint32_t unit;
-        if ( !getInt( rowIndex, 1, unit) )
+        if ( !getInt( rowIndex, cColumnIndexUnit, unit) )
         {
             continue;
         }
 
         uint32_t ChannelNumber;
-        if ( !getInt( rowIndex, 2, ChannelNumber) )
+        if ( !getInt( rowIndex, cColumnIndexChannel, ChannelNumber) )
         {
             continue;
         }
 
         uint32_t Voltage;
-        if ( !getInt( rowIndex, 3, Voltage) )
+        if ( !getInt( rowIndex, cColumnIndexVoltage, Voltage) )
         {
             continue;
         }
 
-        uint32_t SpectrumBarIndex;
-        if ( !getInt( rowIndex, 4, SpectrumBarIndex) )
-        {
-            continue;
-        }
+        QComboBox* combo = (QComboBox*)ui->tableWidget->cellWidget(rowIndex, cColumnIndexSpectrumBarIndex);
+        uint32_t SpectrumBarIndex = combo->currentIndex();
 
-        double   Multipler;
-        if ( !getDouble( rowIndex, 5, Multipler) )
-        {
-            continue;
-        }
+        FloatSliderWidget* gainSlider = (FloatSliderWidget*)ui->tableWidget->cellWidget(rowIndex, cColumnIndexGain);
+        double   Gain = gainSlider->value();
 
-        QPushButton* buttonPtr = (QPushButton*)ui->tableWidget->cellWidget(rowIndex, 6);
+        FloatSliderWidget* fadeSlider = (FloatSliderWidget*)ui->tableWidget->cellWidget(rowIndex, cColumnIndexFade);
+        double   Fade = fadeSlider->value();
+
+        QPushButton* buttonPtr = (QPushButton*)ui->tableWidget->cellWidget(rowIndex, cColumnIndexColor);
         auto color = buttonPtr->text();
 
-        QLabel* labelPtr = (QLabel*)ui->tableWidget->cellWidget(rowIndex, 7);
+        QLabel* labelPtr = (QLabel*)ui->tableWidget->cellWidget(rowIndex, cColumnIndexUuid);
         auto uuid = labelPtr->text();
 
-        channelsTmp.emplace_back( label, unit, ChannelNumber, Voltage, SpectrumBarIndex, Multipler, color, uuid );
+        channelsTmp.emplace_back( label, unit, ChannelNumber, Voltage, SpectrumBarIndex, Gain, Fade, color, uuid );
         qDebug() << "label" << label
                  << "unit"<< unit
                  << "ChannelNumber" << ChannelNumber
                  << "Voltage" << Voltage
                  << "SpectrumBarIndex" << SpectrumBarIndex
-                 << "Multipler" << Multipler
+                 << "Gain" << Gain
+                 << "Fade" << Fade
                  << "Color" << color
                  << "Uuid" << uuid;
     }
@@ -481,7 +478,7 @@ void ChannelConfigurator::setEnableOkButton(bool isEnabled)
 {
     for ( auto button : ui->buttonBox->buttons() )
     {
-        if ( QDialogButtonBox::AcceptRole == ui->buttonBox->buttonRole(button))
+        if ( QDialogButtonBox::AcceptRole == ui->buttonBox->buttonRole(button) )
         {
             button->setEnabled( isEnabled );
             qDebug() << "Ok button => " << (isEnabled?"enabled":"disabled");
@@ -509,6 +506,32 @@ QPushButton *ChannelConfigurator::prepareColorButton(const QColor &defaultColor)
        }
    });
    return selectColorButton;
+}
+
+QComboBox *ChannelConfigurator::prepareSpectrumCombo(int defaultValue)
+{
+   QComboBox *combo = new QComboBox();
+
+   int hzPerFft = double(cMaxFrequensy)/cFFTSize;
+   for ( int fftIndex = 0; fftIndex < cFFTSize; ++fftIndex )
+   {
+      int bbondary = fftIndex*hzPerFft;
+      int tbondary = bbondary+hzPerFft;
+      QString item = QString::number(fftIndex) + " (" +
+            QString::number(bbondary) + " - " + QString::number(tbondary)  + ")";
+      combo->addItem(item);
+   }
+
+   if ( defaultValue >=0 || defaultValue < cFFTSize )
+   {
+      combo->setCurrentIndex( defaultValue );
+   }
+   else
+   {
+      combo->setCurrentIndex( cDefaultSpectrumIndex );
+   }
+
+   return combo;
 }
 
 QLabel *ChannelConfigurator::prepareUUIDLabel(const QUuid &uuid)
@@ -548,20 +571,12 @@ bool ChannelConfigurator::isTableDataValid() const
 
             switch (colIndex)
             {
-            case 0: break;
-            case 5:
-            {
-                bool isMultiplerValid = false;
-                double mult = item.toDouble( &isMultiplerValid );
-                if ( !isMultiplerValid || !(mult > 0.0) )
-                {
-                    isValid = false;
-                    qDebug() << "col:" << colIndex << "row:" << rowIndex << " Multipler value must be greater that '0'";
-                }
-                break;
-            }
-            case 6: break;
-            case 7: break;
+            case cColumnIndexLabel: break;
+            case cColumnIndexFade: break;
+            case cColumnIndexGain: break;
+            case cColumnIndexColor: break;
+            case cColumnIndexUuid: break;
+            case cColumnIndexSpectrumBarIndex: break;
 
             default:
             {
@@ -602,8 +617,12 @@ void ChannelConfigurator::on_tableWidget_customContextMenuRequested( const QPoin
            index = ui->tableWidget->currentRow();
            ui->tableWidget->insertRow( index );
         }
-        ui->tableWidget->setCellWidget(index, 6, prepareColorButton( QColorConstants::Red ));
-        ui->tableWidget->setCellWidget(index, 7, prepareUUIDLabel( QUuid::createUuid() ));
+        ui->tableWidget->setItem(       index, cColumnIndexVoltage, new QTableWidgetItem( QString::number(220)) );
+        ui->tableWidget->setCellWidget( index, cColumnIndexColor, prepareColorButton( QColorConstants::Red ));
+        ui->tableWidget->setCellWidget( index, cColumnIndexSpectrumBarIndex, prepareSpectrumCombo( cDefaultSpectrumIndex ));
+        ui->tableWidget->setCellWidget( index, cColumnIndexUuid, prepareUUIDLabel( QUuid::createUuid() ));
+        ui->tableWidget->setCellWidget( index, cColumnIndexGain, new FloatSliderWidget( cMaxGainValue, cMinGainValue, cDefaultGainValue ) );
+        ui->tableWidget->setCellWidget( index, cColumnIndexFade, new FloatSliderWidget( cMaxFadeValue, cMinFadeValue, cDefaultFadeValue ) );
         setEnableOkButton(isTableDataValid());
     });
 
@@ -619,16 +638,22 @@ void ChannelConfigurator::on_tableWidget_customContextMenuRequested( const QPoin
         {
             qDebug() << "Delete";
             int index = ui->tableWidget->currentRow();
-            auto button = ui->tableWidget->cellWidget(index, 6);
-            if ( button)
-            {
-               delete button;
-            }
-            auto label = ui->tableWidget->cellWidget(index, 7);
-            if ( label )
-            {
-               delete label;
-            }
+
+            auto widget = ui->tableWidget->cellWidget(index, cColumnIndexColor);
+            if ( widget ) { delete widget; }
+
+            widget = ui->tableWidget->cellWidget(index, cColumnIndexSpectrumBarIndex);
+            if ( widget ) { delete widget; }
+
+            widget = ui->tableWidget->cellWidget(index, cColumnIndexUuid);
+            if ( widget ) { delete widget; }
+
+            widget = ui->tableWidget->cellWidget(index, cColumnIndexGain);
+            if ( widget ) { delete widget; }
+
+            widget = ui->tableWidget->cellWidget(index, cColumnIndexFade);
+            if ( widget ) { delete widget; }
+
             ui->tableWidget->removeRow( ui->tableWidget->currentRow() );
         }
         setEnableOkButton(isTableDataValid());

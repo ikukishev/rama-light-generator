@@ -10,6 +10,10 @@
 #include <QJsonDocument>
 #include <QLabel>
 #include <QScreen>
+#include "constants.h"
+#include "widgets/LabelEx.h"
+#include "widgets/SliderEx.h"
+#include "widgets/FloatSliderWidget.h"
 
 
 const QString cSequenseConfigurationFileName( "sequenseConfiguration.json" );
@@ -281,10 +285,10 @@ void MainWindow::sequenseMove(std::weak_ptr<CLightSequence> thisObject, EMoveDir
 
 void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
 {
-    if ( m_current.lock() == thisObject.lock() )
-    {
-       return;
-    }
+//    if ( m_current.lock() == thisObject.lock() )
+//    {
+//       return;
+//    }
 
     ui->tableWidget_2->clear();
     QStringList labels;
@@ -320,7 +324,10 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
         const auto& channel = m_channelConfigurator->channels()[i];
         auto channelConfiguration = sequense->getConfiguration( channel.uuid );
 
-        auto widgetPressed = [this, channelConfiguration]()
+        auto widgetPressed = [this, channelConfiguration,
+              defaultGain = channel.gain,
+              defaultSpectrumIndex = channel.spectrumIndex,
+              defaultFade = channel.fade]()
         {
             qDebug() << "widgetPressed " << channelConfiguration->channelUuid;
 
@@ -340,7 +347,7 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
             }
             else
             {
-                m_spectrograph->setBarSelected( Spectrograph::NullIndex );
+                m_spectrograph->setBarSelected( defaultSpectrumIndex );
             }
 
             if ( channelConfiguration->isGainSet() )
@@ -349,66 +356,56 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
             }
             else
             {
-                m_spectrograph->setGain( Spectrograph::NoGain );
+                m_spectrograph->setGain( defaultGain );
             }
 
             m_spectrograph->setMinimumLevel( channelConfiguration->minimumLevel );
-            m_spectrograph->setFading( channelConfiguration->fading );
+
+            if ( channelConfiguration->isFadeSet() )
+            {
+                m_spectrograph->setFading( *(channelConfiguration->fade) );
+            }
+            else
+            {
+                m_spectrograph->setFading( defaultFade );
+            }
+
         };
 
-        auto label = new QLabelEx( channel.label );
-        connect( label, &QLabelEx::clicked, widgetPressed );
+        auto label = new LabelEx( channel.label );
+        connect( label, &LabelEx::clicked, widgetPressed );
 
         ui->tableWidget_2->setCellWidget( i, 0, label );
 
-        auto gainSlider = new QSliderEx( Qt::Horizontal );
-        gainSlider->setMaximum( 100 );
-        gainSlider->setMinimum( 0 );
-        if ( channelConfiguration->isGainSet())
-        {
-            gainSlider->setValue( 10.0 * (*channelConfiguration->gain) );
-        }
-        else
-        {
-            gainSlider->setValue( channel.multipler * 10.0 );
-        }
-        connect(gainSlider, &QSliderEx::valueChanged, [channelConfiguration, this]( int value ){
-            channelConfiguration->setGain( double(value)/10 );
-            m_spectrograph->setGain( *(channelConfiguration->gain) );
-        });
-        connect(gainSlider, &QSliderEx::clicked, widgetPressed );
 
+        auto gainSlider = new FloatSliderWidget( cMaxGainValue, cMinGainValue,
+                                                 channelConfiguration->isGainSet() ? (*channelConfiguration->gain) : channel.gain );
+        connect(gainSlider, &FloatSliderWidget::valueChanged, [channelConfiguration, this]( double value ){
+            channelConfiguration->setGain( value );
+            m_spectrograph->setGain( value );
+        });
+        connect(gainSlider, &FloatSliderWidget::clicked, widgetPressed );
         ui->tableWidget_2->setCellWidget( i, 1, gainSlider );
 
 
-        auto threshHold = new QSliderEx( Qt::Horizontal );
-        threshHold->setMaximum( 100 );
-        threshHold->setMinimum( 0 );
-
-        threshHold->setValue( 100.0 * (channelConfiguration->minimumLevel) );
-
-        connect(threshHold, &QSliderEx::valueChanged, [channelConfiguration, this]( int value ){
-            channelConfiguration->minimumLevel =  double(value)/100.0;
+        auto threshHold = new FloatSliderWidget( cMaxThreshholdValue, cMinThreshholdValue, channelConfiguration->minimumLevel );
+        connect( threshHold, &FloatSliderWidget::valueChanged, [channelConfiguration, this]( double value ){
+            channelConfiguration->minimumLevel =  value;
             m_spectrograph->setMinimumLevel( channelConfiguration->minimumLevel );
         });
-        connect(threshHold, &QSliderEx::clicked, widgetPressed );
-
+        connect( threshHold, &FloatSliderWidget::clicked, widgetPressed );
         ui->tableWidget_2->setCellWidget( i, 2, threshHold );
 
-        auto fading = new QSliderEx( Qt::Horizontal );
-        fading->setMaximum( 100 );
-        fading->setMinimum( 0 );
 
-        fading->setValue( 10.0 * (channelConfiguration->fading ) );
-
-        connect(fading, &QSliderEx::valueChanged, [channelConfiguration, this]( int value ){
-            channelConfiguration->fading =  double(value)/10.0;
-            m_spectrograph->setFading( channelConfiguration->fading );
+        auto fading = new FloatSliderWidget( cMaxFadeValue, cMinFadeValue,
+                                             channelConfiguration->isFadeSet() ? (*channelConfiguration->fade) : channel.fade );
+        connect(fading, &FloatSliderWidget::valueChanged, [channelConfiguration, this]( int value ){
+            channelConfiguration->setFade( value );
+            m_spectrograph->setFading( value );
         });
-        connect(fading, &QSliderEx::clicked, widgetPressed );
+        connect(fading, &FloatSliderWidget::clicked, widgetPressed );
 
         ui->tableWidget_2->setCellWidget( i, 3, fading );
-
     }
 
 }

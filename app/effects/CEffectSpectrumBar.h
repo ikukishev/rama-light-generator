@@ -1,6 +1,7 @@
 #ifndef CEFFECTFADE_H
 #define CEFFECTFADE_H
 
+#include "constants.h"
 #include "timeline/IEffectGenerator.h"
 
 class Spectrograph;
@@ -25,9 +26,9 @@ protected:
 
 private:
 
-   double m_gain = 1.0;
-   double m_fade = 1.0;
-   double m_threshold = 0.0;
+   double m_gain = cDefaultGainValue;
+   double m_fade = cDefaultFadeValue;
+   double m_threshold = cDefaultThreshholdValue;
    std::size_t m_spectrumBarIndex = 1;
    int64_t lastPosition = 0;
    double lastLevel = 0;

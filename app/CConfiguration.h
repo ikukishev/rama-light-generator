@@ -14,7 +14,8 @@ public:
         const uint32_t& achannel,
         const uint32_t& avoltage,
         const uint32_t& aspectrumIndex,
-        const double& amultipler,
+        const double& again,
+        const double& afade,
         const QString& acolor,
         const QUuid& auuid)
         : label( alabel )
@@ -22,7 +23,8 @@ public:
         , channel( achannel )
         , voltage( avoltage )
         , spectrumIndex( aspectrumIndex )
-        , multipler( amultipler )
+        , gain( again )
+        , fade( afade )
         , color( acolor )
         , uuid( auuid )
     {}
@@ -30,8 +32,9 @@ public:
     uint32_t unit;
     uint32_t channel;
     uint32_t voltage;
-    uint32_t spectrumIndex=2;
-    double multipler;
+    uint32_t spectrumIndex;
+    double gain;
+    double fade;
     QString color;
     QUuid uuid;
 };

@@ -2,6 +2,7 @@
 #include <QVBoxLayout>
 #include <QSlider>
 #include <QLabel>
+#include "widgets/FloatSliderWidget.h"
 
 
 #include "CEffectMaxLevel.h"
@@ -55,7 +56,7 @@ double CEffectMaxLevel::calculateIntensity(const SpectrumData &spectrumData)
     else if ( maxLevel < 0.0 )
         maxLevel = 0.0;
 
-    auto dt = spectrumData.position - lastPosition;
+    auto dt = int64_t(spectrumData.position) - lastPosition;
     if (dt < 0)
     {
         dt=0;
@@ -89,12 +90,7 @@ QWidget *CEffectMaxLevel::buildWidget(QWidget *parent)
 
    vlayout->addWidget(gainLabel);
 
-   QSlider * gain = new QSlider( configWidget );
-   gain->setMaximumHeight( 40 );
-   gain->setOrientation( Qt::Horizontal );
-   gain->setMaximum( 100 );
-   gain->setMinimum( 0 );
-   gain->setValue( m_gain * 20 );
+   FloatSliderWidget * gain = new FloatSliderWidget( cMaxGainValue, cMinGainValue, m_gain, configWidget );
    vlayout->addWidget( gain );
 
    auto fadeLabel =  new QLabel("Fade: ", configWidget);
@@ -102,21 +98,11 @@ QWidget *CEffectMaxLevel::buildWidget(QWidget *parent)
 
    vlayout->addWidget(fadeLabel);
 
-   QSlider * fade = new QSlider( configWidget );
-   fade->setMaximumHeight( 40 );
-   fade->setOrientation( Qt::Horizontal );
-   fade->setMaximum(100);
-   fade->setMinimum(0);
-   fade->setValue( m_fade*20 );
+   FloatSliderWidget * fade = new FloatSliderWidget( cMaxFadeValue, cMinFadeValue, m_fade, configWidget );
    vlayout->addWidget( fade );
 
-   QObject::connect( gain, &QSlider::valueChanged, [ this ]( int value ){
-      m_gain = double(value) / 20.0;
-   });
-
-   QObject::connect( fade, &QSlider::valueChanged, [ this ]( int value ){
-      m_fade = double(value) / 20.0;
-   });
+   QObject::connect( gain, &FloatSliderWidget::valueChanged, [ this ]( double value ){ m_gain = value; });
+   QObject::connect( fade, &FloatSliderWidget::valueChanged, [ this ]( double value ){ m_fade = value; });
 
    auto widget = new QWidget( configWidget );
    vlayout->addWidget( widget );

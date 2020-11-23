@@ -62,7 +62,12 @@
          </column>
          <column>
           <property name="text">
-           <string>Multipler</string>
+           <string>Gain</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Fade</string>
           </property>
          </column>
          <column>

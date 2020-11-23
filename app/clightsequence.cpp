@@ -238,7 +238,7 @@ std::vector<QWidget *> CLightSequence::getControlWidgets()
       trackVolume->setValue(0);
       labelStatus->setText("Started");
 
-      (*connectionFinishPtr) = connect( m_audioFile.get(), &QBassAudioFile::playFinished, [ this, genStop, labelStatus, trackVolume ](){
+      (*connectionFinishPtr) = connect( m_audioFile.get(), &QBassAudioFile::playFinished, [ this, genStop, labelStatus ](){
          if ( CSequenseGenerator::generateLms( this ) )
          {
              labelStatus->setText("Done");
@@ -445,6 +445,18 @@ void CLightSequence::SequenceChannelConfigation::setSpectrumIndex(const uint32_t
     }
 }
 
+void CLightSequence::SequenceChannelConfigation::setFade(const double fd)
+{
+   if ( isFadeSet() )
+   {
+       ( *fade ) = fd;
+   }
+   else
+   {
+       fade = std::make_shared< double >( fd );
+   }
+}
+
 void CLightSequence::SequenceChannelConfigation::setGain(const double mul)
 {
     if ( isGainSet() )
@@ -464,7 +476,7 @@ QJsonObject CLightSequence::SequenceChannelConfigation::serialize() const
     if ( spectrumIndex ) jo[ cKeyChannelSpectrumIndex ] = static_cast<int>( *spectrumIndex );
     if ( gain ) jo[ cKeyChannelGain ] = static_cast<double>( *gain );
     jo[ cKeyChannelMinimumLevel ] = minimumLevel;
-    jo[ cKeyChannelFading ] = fading;
+    if ( fade ) jo[ cKeyChannelFading ] = static_cast<double>( *fade );;
 
     QJsonArray effectsJsonObjects;
     for ( auto& effect : effects )
@@ -526,7 +538,7 @@ std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::Sequ
                     double m = jo[ cKeyChannelFading ].toDouble(-1.0);
                     if ( -1.0 != m )
                     {
-                        cc->fading = m;
+                        cc->setFade( m );
                     }
                 }
 
@@ -556,18 +568,4 @@ std::shared_ptr<CLightSequence::SequenceChannelConfigation> CLightSequence::Sequ
     }
 
     return cc;
-}
-
-
-
-void QLabelEx::mousePressEvent(QMouseEvent *event)
-{
-   emit clicked();
-   QLabel::mousePressEvent(event);
-}
-
-void QSliderEx::mousePressEvent(QMouseEvent *event)
-{
-   emit clicked();
-   QSlider::mousePressEvent(event);
 }

@@ -1,8 +1,8 @@
 
 #include <QVBoxLayout>
-#include <QSlider>
 #include <QLabel>
 
+#include "widgets/FloatSliderWidget.h"
 #include "CEffectFade.h"
 
 const QString cKeyStartIntensityValue( "startIntensityValue" );
@@ -53,32 +53,20 @@ QWidget *CEffectFade::buildWidget(QWidget *parent)
 
    auto vlayout = new QVBoxLayout( );
 
-   auto label = new QLabel("Start intensity: ", configWidget);
-   //label->setMaximumHeight( labelHeight );
-   vlayout->addWidget( label );
-   QSlider * startIntensity = new QSlider( configWidget );
-   startIntensity->setMaximum( 100 );
-   startIntensity->setMinimum( 0 );
-   startIntensity->setValue( m_start_intensity*100 );
-   startIntensity->setOrientation( Qt::Horizontal );
+   vlayout->addWidget( new QLabel("Start intensity: ", configWidget) );
+   FloatSliderWidget * startIntensity = new FloatSliderWidget( cMaxIntensity, cMinIntensity, m_start_intensity, configWidget );
    vlayout->addWidget( startIntensity );
 
    vlayout->addWidget( new QLabel("End intensity: ", configWidget));
-   QSlider * endIntensity = new QSlider( configWidget );
-   endIntensity->setMaximum(100);
-   endIntensity->setMinimum(0);
-
-   //endIntensity->setMaximumHeight( labelHeight );
-   endIntensity->setValue( m_end_intensity*100 );
-   endIntensity->setOrientation( Qt::Horizontal );
+   FloatSliderWidget * endIntensity = new FloatSliderWidget( cMaxIntensity, cMinIntensity, m_end_intensity, configWidget );
    vlayout->addWidget( endIntensity );
 
-   QObject::connect( startIntensity, &QSlider::valueChanged, [ this ]( int value ){
-      m_start_intensity = double(value) / 100.0;
+   QObject::connect( startIntensity, &FloatSliderWidget::valueChanged, [ this ]( double value ){
+      m_start_intensity = value;
    });
 
-   QObject::connect( endIntensity, &QSlider::valueChanged, [ this ]( int value ){
-      m_end_intensity = double(value) / 100.0;
+   QObject::connect( endIntensity, &FloatSliderWidget::valueChanged, [ this ]( double value ){
+      m_end_intensity = value;
    });
 
    configWidget->setLayout( vlayout );

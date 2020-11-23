@@ -59,11 +59,6 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                 , currentSpectrum = std::make_shared< SpectrumData >() ]
                 (const SpectrumData& spectrum)
         {
-            if ( !isOpen() )
-            {
-                return;
-            }
-
             auto sequense = currentSequense.lock();
             if ( nullptr != sequense )
             {
@@ -107,8 +102,14 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                         spectrumIndex = *(localConfiguration->spectrumIndex);
                     }
 
+                    auto fade = channel.fade;
+                    if ( localConfiguration->isFadeSet() )
+                    {
+                        fade = *(localConfiguration->fade);
+                    }
 
-                    auto k = (-1.0 / (1000.0 * ( localConfiguration->fading < 0.1 ? 0.1 : localConfiguration->fading )));
+
+                    auto k = (-1.0 / (1000.0 * ( fade < 0.1 ? 0.1 : fade )));
                     auto b = 1.0;
                     double y = k * double(dt) + b;
                     double intensityReduction = b - y;
@@ -118,7 +119,7 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
 
                     if ( !useEffectValue )
                     {
-                       auto gain = channel.multipler;
+                       auto gain = channel.gain;
                        if ( localConfiguration->isGainSet() )
                        {
                            gain = *(localConfiguration->gain);

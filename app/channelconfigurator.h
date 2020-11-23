@@ -6,6 +6,7 @@
 #include <QAbstractButton>
 #include <QString>
 #include <QLabel>
+#include <QComboBox>
 #include <vector>
 #include <CConfiguration.h>
 
@@ -37,6 +38,7 @@ private slots:
     void setEnableOkButton(bool isEnabled);
 
     QPushButton *prepareColorButton( const QColor& defaultColor );
+    QComboBox *prepareSpectrumCombo( int defaultValue );
     QLabel *prepareUUIDLabel(const QUuid& uuid );
 
     bool isTableDataValid() const;

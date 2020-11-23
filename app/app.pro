@@ -25,7 +25,10 @@ SOURCES  += channelconfigurator.cpp \
             timeline/CTimeLinePosition.cpp \
             timeline/CTimeLineView.cpp \
             timeline/IEffectGenerator.cpp \
-            timeline/ITimeLineTrackView.cpp
+            timeline/ITimeLineTrackView.cpp \
+            widgets/FloatSliderWidget.cpp \
+            widgets/LabelEx.cpp \
+            widgets/SliderEx.cpp
 
 HEADERS  += channelconfigurator.h \
             CConfiguration.h \
@@ -33,6 +36,7 @@ HEADERS  += channelconfigurator.h \
             ceffecteditorwidget.h \
             clightsequence.h \
             clorserialctrl.h \
+            constants.h \
             csequensegenerator.h \
             effects/CEffectFade.h \
             effects/CEffectIntensity.h \
@@ -48,12 +52,15 @@ HEADERS  += channelconfigurator.h \
             timeline/CTimeLinePosition.h \
             timeline/CTimeLineView.h \
             timeline/IEffectGenerator.h \
-            timeline/ITimeLineTrackView.h
+            timeline/ITimeLineTrackView.h \
+            widgets/FloatSliderWidget.h \
+            widgets/LabelEx.h \
+            widgets/SliderEx.h
 
 INCLUDEPATH += ../3rdparty/
 INCLUDEPATH += ../3rdparty/bass24-linux
 
-RESOURCES = fft-base/spectrum.qrc
+RESOURCES += spectrum.qrc
 RESOURCES +=  ../3rdparty/qdarkstyle/style.qrc
 
 CONFIG += install_ok  # Do not cargo-cult this!

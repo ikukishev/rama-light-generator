@@ -1,6 +1,7 @@
 #ifndef CEFFECTFADE_H
 #define CEFFECTFADE_H
 
+#include "constants.h"
 #include "timeline/IEffectGenerator.h"
 
 class CEffectMaxLevel: public IEffectGenerator
@@ -23,8 +24,8 @@ protected:
 
 private:
 
-   double m_gain = 1.0;
-   double m_fade = 1.0;
+   double m_gain = cDefaultGainValue;
+   double m_fade = cDefaultFadeValue;
    int64_t lastPosition = 0;
    double lastLevel = 0;
 };

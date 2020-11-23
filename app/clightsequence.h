@@ -31,50 +31,6 @@ signals:
 };
 
 
-class QLabelEx : public QLabel
-{
-    Q_OBJECT
-public:
-    explicit QLabelEx(QWidget *parent=nullptr, Qt::WindowFlags f=Qt::WindowFlags())
-        : QLabel( parent, f )
-    {}
-    explicit QLabelEx(const QString &text, QWidget *parent=nullptr, Qt::WindowFlags f=Qt::WindowFlags())
-        : QLabel( text, parent, f )
-    {}
-
-signals:
-    void clicked();
-
-protected:
-
-    virtual void mousePressEvent(QMouseEvent* event) override;
-
-};
-
-
-
-class QSliderEx : public QSlider
-{
-    Q_OBJECT
-public:
-    explicit QSliderEx(QWidget *parent = nullptr)
-        : QSlider( parent )
-    {}
-
-    explicit QSliderEx(Qt::Orientation orientation, QWidget *parent = nullptr)
-        : QSlider( orientation, parent )
-    {}
-
-signals:
-    void clicked();
-
-protected:
-
-    virtual void mousePressEvent(QMouseEvent* event) override;
-
-};
-
-
 
 class CLightSequence : public QObject
         , public std::enable_shared_from_this<CLightSequence>
@@ -92,24 +48,35 @@ public:
       SequenceChannelConfigation( const QUuid& achannelUuid, const uint32_t& spectrumIndex )
          : channelUuid( achannelUuid )
          , spectrumIndex( std::make_shared< uint32_t >( spectrumIndex ) )
-         , gain( nullptr )
       {}
 
       SequenceChannelConfigation( const QUuid& achannelUuid,
                                   const uint32_t& spectrumIndex,
-                                  const double& amultipler )
+                                  const double& again )
          : channelUuid( achannelUuid )
          , spectrumIndex( std::make_shared< uint32_t >( spectrumIndex ) )
-         , gain( std::make_shared< double >( amultipler ) )
+         , gain( std::make_shared< double >( again ) )
+      {}
+
+      SequenceChannelConfigation( const QUuid& achannelUuid,
+                                  const uint32_t& spectrumIndex,
+                                  const double& again,
+                                  const double& afade)
+         : channelUuid( achannelUuid )
+         , spectrumIndex( std::make_shared< uint32_t >( spectrumIndex ) )
+         , gain( std::make_shared< double >( again ) )
+         , fade( std::make_shared< double >( afade ) )
       {}
 
 
       bool isSpectrumIndexSet() const { return nullptr != spectrumIndex; }
       bool isGainSet() const { return nullptr != gain; }
+      bool isFadeSet() const { return nullptr != fade; }
       bool isSameChannel( const QUuid& auuid ) const { return auuid == channelUuid; }
 
       void setSpectrumIndex( const uint32_t index );
-      void setGain(const double mul );
+      void setFade(const double fade );
+      void setGain(const double fade );
 
       QJsonObject serialize() const;
 
@@ -120,7 +87,7 @@ public:
       std::shared_ptr< uint32_t > spectrumIndex;
       std::shared_ptr< double > gain;
       double minimumLevel = 0.0;
-      double fading = 3.0;
+      std::shared_ptr< double > fade;
       std::map< QUuid, std::shared_ptr<IEffectGenerator> > effects;
    };
 

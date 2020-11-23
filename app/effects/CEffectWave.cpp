@@ -1,7 +1,7 @@
 
 #include <QVBoxLayout>
-#include <QSlider>
 #include <QLabel>
+#include "widgets/FloatSliderWidget.h"
 #include <cmath>
 
 #include "CEffectWave.h"
@@ -63,53 +63,26 @@ QWidget *CEffectWave::buildWidget(QWidget *parent)
    auto vlayout = new QVBoxLayout( );
 
    vlayout->addWidget( new QLabel( "Pahase shift:", configWidget ) );
-   QSlider * labelPhaseSlider = new QSlider( configWidget );
-   labelPhaseSlider->setMaximum( 100 );
-   labelPhaseSlider->setMinimum( 0 );
-   labelPhaseSlider->setValue( m_phaseShift*(100/M_2_PI) );
-   labelPhaseSlider->setOrientation( Qt::Horizontal );
+   FloatSliderWidget * labelPhaseSlider = new FloatSliderWidget( 2*M_PI, 0.0, m_phaseShift, configWidget );
    vlayout->addWidget( labelPhaseSlider );
 
    vlayout->addWidget( new QLabel( "Wave length:", configWidget) );
-   QSlider * waveLengthSlider = new QSlider( configWidget );
-   waveLengthSlider->setMaximum(1000);
-   waveLengthSlider->setMinimum(0);
-   waveLengthSlider->setValue( m_waveLength*20 );
-   waveLengthSlider->setOrientation( Qt::Horizontal );
+   FloatSliderWidget * waveLengthSlider = new FloatSliderWidget( 50.0, 0, m_waveLength, configWidget );
    vlayout->addWidget( waveLengthSlider );
 
    vlayout->addWidget( new QLabel( "Wave gain:", configWidget));
-   QSlider * waveGain = new QSlider( configWidget );
-   waveGain->setMaximum(100);
-   waveGain->setMinimum(0);
-   waveGain->setValue( m_waveGain*100 );
-   waveGain->setOrientation( Qt::Horizontal );
+   FloatSliderWidget * waveGain = new FloatSliderWidget( 1.0, 0.0, m_waveGain, configWidget );
    vlayout->addWidget( waveGain );
 
    vlayout->addWidget( new QLabel( "Amplitude shift:", configWidget));
-   QSlider * waveAmplitudeShift = new QSlider( configWidget );
-   waveAmplitudeShift->setMaximum(100);
-   waveAmplitudeShift->setMinimum(0);
-   waveAmplitudeShift->setValue( (m_waveAmplitudeShift+0.5)*50 );
-   waveAmplitudeShift->setOrientation( Qt::Horizontal );
+   FloatSliderWidget * waveAmplitudeShift = new FloatSliderWidget( 1.5, -0.5, m_waveAmplitudeShift, configWidget );
    vlayout->addWidget( waveAmplitudeShift );
 
 
-   QObject::connect( labelPhaseSlider, &QSlider::valueChanged, [ this ]( int value ){
-      m_phaseShift = (value*M_2_PI) / 100.0;
-   });
-
-   QObject::connect( waveLengthSlider, &QSlider::valueChanged, [ this ]( int value ){
-      m_waveLength = value / 20.0;
-   });
-
-   QObject::connect( waveGain, &QSlider::valueChanged, [ this ]( int value ){
-      m_waveGain = value / 100.0;
-   });
-
-   QObject::connect( waveAmplitudeShift, &QSlider::valueChanged, [ this ]( int value ){
-      m_waveAmplitudeShift = -0.5 + value / 50.0;
-   });
+   QObject::connect( labelPhaseSlider, &FloatSliderWidget::valueChanged, [ this ]( double value ){ m_phaseShift = value; });
+   QObject::connect( waveLengthSlider, &FloatSliderWidget::valueChanged, [ this ]( double value ){ m_waveLength = value; });
+   QObject::connect( waveGain, &FloatSliderWidget::valueChanged, [ this ]( double value ){ m_waveGain = value; });
+   QObject::connect( waveAmplitudeShift, &FloatSliderWidget::valueChanged, [ this ]( double value ){ m_waveAmplitudeShift = value; });
 
 
    configWidget->setLayout( vlayout );

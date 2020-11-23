@@ -1,6 +1,7 @@
 #include <QVBoxLayout>
 #include <QSlider>
 #include <QLabel>
+#include "widgets/FloatSliderWidget.h"
 #include "spectrograph.h"
 #include "CEffectSpectrumBar.h"
 
@@ -79,6 +80,8 @@ double CEffectSpectrumBar::calculateIntensity(const SpectrumData &spectrumData)
        lastLevel = intensityLevel;
    }
 
+   qDebug() << "calculateIntensity";
+
    if ( nullptr != spectrograph )
    {
       spectrograph->spectrumChanged( spectrumData );
@@ -99,53 +102,36 @@ QWidget *CEffectSpectrumBar::buildWidget(QWidget *parent)
    auto vlayout = new QVBoxLayout();
 
 
-   auto gainLabel =  new QLabel( "Gain: ", configWidgetLeft );
-   vlayout->addWidget( gainLabel );
-   QSlider * gain = new QSlider( configWidgetLeft );
-   gain->setOrientation( Qt::Horizontal );
-   gain->setMaximum( 100 );
-   gain->setMinimum( 0 );
-   gain->setValue( m_gain * 20 );
+   vlayout->addWidget( new QLabel( "Gain: ", configWidgetLeft ) );
+   FloatSliderWidget * gain = new FloatSliderWidget( cMaxGainValue, cMinGainValue, m_gain, configWidgetLeft );
    vlayout->addWidget( gain );
 
-
-   auto fadeLabel =  new QLabel("Fade: ", configWidgetLeft);
-   vlayout->addWidget(fadeLabel);
-   QSlider * fade = new QSlider( configWidgetLeft );
-   fade->setOrientation( Qt::Horizontal );
-   fade->setMaximum( 100 );
-   fade->setMinimum( 0);
-   fade->setValue( m_fade*20 );
+   vlayout->addWidget(new QLabel("Fade: ", configWidgetLeft));
+   FloatSliderWidget * fade = new FloatSliderWidget( cMaxFadeValue, cMinFadeValue, m_fade, configWidgetLeft );
    vlayout->addWidget( fade );
 
-
-   auto thresholdLabel =  new QLabel("Threshold: ", configWidgetLeft);
-   vlayout->addWidget(thresholdLabel);
-   QSlider * threshold = new QSlider( configWidgetLeft );
-   threshold->setOrientation( Qt::Horizontal );
-   threshold->setMaximum( 100 );
-   threshold->setMinimum( 0);
-   threshold->setValue( m_threshold*100 );
+   vlayout->addWidget(new QLabel("Threshold: ", configWidgetLeft));
+   FloatSliderWidget * threshold = new FloatSliderWidget( cMaxThreshholdValue, cMinThreshholdValue, m_threshold, configWidgetLeft );
    vlayout->addWidget( threshold );
 
-   QObject::connect( gain, &QSlider::valueChanged, [ this ]( int value ){
-      m_gain = double( value ) / 20.0;
+   QObject::connect( gain, &FloatSliderWidget::valueChanged, [ this ]( double value ){
+      m_gain = value;
       if ( nullptr != spectrograph )
       {
          spectrograph->setGain( m_gain );
       }
    });
 
-   QObject::connect( fade, &QSlider::valueChanged, [ this ]( int value ){
-      m_fade = double( value ) / 20.0;
+   QObject::connect( fade, &FloatSliderWidget::valueChanged, [ this ]( double value ){
+      m_fade = value;
       if ( nullptr != spectrograph )
       {
          spectrograph->setFading( m_fade );
       }
    });
 
-   QObject::connect( threshold, &QSlider::valueChanged, [ this ]( int value ){
-      m_threshold = double( value ) / 100.0;
+   QObject::connect( threshold, &FloatSliderWidget::valueChanged, [ this ]( double value ){
+      m_threshold = value;
       if ( nullptr != spectrograph )
       {
          spectrograph->setMinimumLevel( m_threshold );

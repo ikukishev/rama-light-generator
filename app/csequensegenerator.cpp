@@ -355,8 +355,8 @@ protected:
         }
 
         double minimumLevel = 0.0;
-        double fading = 1.0;
-        double gain = channel.multipler;
+        double fading = channel.fade;
+        double gain = channel.gain;
         uint32_t spectrumIndex = channel.spectrumIndex;
 
 
@@ -365,7 +365,10 @@ protected:
         if ( channelConfigurationPtr )
         {
             minimumLevel = channelConfigurationPtr->minimumLevel;
-            fading = channelConfigurationPtr->fading;
+
+            if ( channelConfigurationPtr->isFadeSet() )
+                fading = *channelConfigurationPtr->fade;
+
             if ( channelConfigurationPtr->isGainSet() )
                 gain = *channelConfigurationPtr->gain;
 

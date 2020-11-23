@@ -1,4 +1,6 @@
 #include "CEffectIntensity.h"
+#include "widgets/FloatSliderWidget.h"
+#include "constants.h"
 
 const QString cKeyIntensityValue( "intensityValue" );
 
@@ -36,20 +38,11 @@ QWidget *CEffectIntensity::buildWidget(QWidget *parent)
     QWidget* configWidget = new QWidget( parent );
 
     auto vlayout = new QVBoxLayout( );
-    auto label = new QLabel("Intensity: ", configWidget);
-    label->setMaximumHeight( labelHeight );
-    vlayout->addWidget( label );
+    vlayout->addWidget( new QLabel("Intensity: ", configWidget) );
 
-    QSlider * intensity = new QSlider( configWidget );
-    intensity->setMaximum(100);
-    intensity->setValue( m_intensity * 100 );
-    intensity->setMinimum(0);
-    intensity->setOrientation( Qt::Horizontal );
-    intensity->setMaximumHeight( labelHeight );
+    FloatSliderWidget * intensity = new FloatSliderWidget( cMaxIntensity, cMinIntensity, m_intensity, configWidget );
 
-    QObject::connect(intensity, &QSlider::valueChanged, [ this ]( int value ){
-        m_intensity = double(value)/100.0;
-    });
+    QObject::connect(intensity, &FloatSliderWidget::valueChanged, [ this ]( double value ){ m_intensity = value; });
 
     vlayout->addWidget( intensity );
     configWidget->setLayout( vlayout );
