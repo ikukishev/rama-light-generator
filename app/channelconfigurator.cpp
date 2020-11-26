@@ -72,8 +72,13 @@ QDialog::DialogCode ChannelConfigurator::display()
     if ( ui->tableWidget->rowCount() == 0 )
     {
         ui->tableWidget->setRowCount( 1 );
+
+        ui->tableWidget->setItem(       0, cColumnIndexVoltage, new QTableWidgetItem( QString::number(220)) );
         ui->tableWidget->setCellWidget( 0, cColumnIndexColor, prepareColorButton( QColorConstants::Red ));
+        ui->tableWidget->setCellWidget( 0, cColumnIndexSpectrumBarIndex, prepareSpectrumCombo( cDefaultSpectrumIndex ));
         ui->tableWidget->setCellWidget( 0, cColumnIndexUuid, prepareUUIDLabel( QUuid::createUuid() ));
+        ui->tableWidget->setCellWidget( 0, cColumnIndexGain, new FloatSliderWidget( cMaxGainValue, cMinGainValue, cDefaultGainValue ) );
+        ui->tableWidget->setCellWidget( 0, cColumnIndexFade, new FloatSliderWidget( cMaxFadeValue, cMinFadeValue, cDefaultFadeValue ) );
     }
     setEnableOkButton(isTableDataValid());
     auto result = static_cast< QDialog::DialogCode >( exec() );
@@ -663,7 +668,7 @@ void ChannelConfigurator::on_tableWidget_customContextMenuRequested( const QPoin
     menu.addAction(newAct);
     menu.addAction(delAct);
 
-    menu.exec( this->pos() + pos );
+    menu.exec( QCursor::pos() );
     delete newAct;
     delete delAct;
 
