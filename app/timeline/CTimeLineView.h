@@ -85,4 +85,6 @@ private:
     int64_t m_compositionDuration = 100000;
     int64_t m_compositionPosition = 0;
 
+    std::shared_ptr< IEffectGenerator > m_copyGenerator = nullptr;
+
 };

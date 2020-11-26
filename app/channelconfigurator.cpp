@@ -82,6 +82,54 @@ ChannelConfigurator::ChannelConfigurator(QWidget *parent)
     } );
 
     ui->verticalLayout_3->addWidget( spectrograph );
+
+    auto widget = new QWidget();
+    auto hlayout = new QHBoxLayout();
+    hlayout->setContentsMargins(0,0,0,0);
+    widget->setLayout(hlayout);
+    widget->setMaximumHeight( 30 );
+    playButton = new QPushButton();
+    hlayout->addWidget( playButton );
+    playButton->setMaximumWidth(40);
+    connect( playButton, &QPushButton::clicked, [this]()
+    {
+        if ( isDisplayed )
+        {
+            if ( auto ptr = m_sequense.lock() )
+            {
+                if ( ptr->getAudioFile()->state() == QBassAudioFile::EState::Play )
+                {
+                    playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
+                    ptr->getAudioFile()->stop();
+                }
+                else
+                {
+                    playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPause) );
+                    ptr->getAudioFile()->play();
+                }
+            }
+        }
+    });
+
+    progressSlider = new FloatSliderWidget(1,0,0);
+
+    progressSlider->setMinimum( 0 );
+
+    connect( progressSlider, &FloatSliderWidget::sliderReleased, [ this ]()
+    {
+        if ( isDisplayed )
+        {
+            if ( auto ptr = m_sequense.lock() )
+            {
+                int64_t position = progressSlider->value()*1000;
+                ptr->getAudioFile()->setPosition(position);
+            }
+        }
+    });
+
+    hlayout->addWidget( progressSlider );
+
+    ui->verticalLayout_3->addWidget( widget );
    load();
 }
 
@@ -111,6 +159,14 @@ QDialog::DialogCode ChannelConfigurator::display()
     {
         m_spectrographConnection = connect( ptr.get(), &CLightSequence::positionChanged,
                                                 this, &ChannelConfigurator::positionChanged );
+        if ( ptr->getAudioFile()->state() == QBassAudioFile::EState::Play )
+        {
+            playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPause) );
+        }
+        else
+        {
+            playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
+        }
     }
     auto result = static_cast< QDialog::DialogCode >( exec() );
     isDisplayed = false;
@@ -739,6 +795,7 @@ void ChannelConfigurator::sequensePlayStarted(std::weak_ptr<CLightSequence> sequ
             m_spectrographConnection = connect( ptr.get(), &CLightSequence::positionChanged,
                                                 this, &ChannelConfigurator::positionChanged );
         }
+        progressSlider->setMaximum( ptr->getAudioFile()->duration()/1000.0 );
     }
     else
     {
@@ -778,12 +835,14 @@ void ChannelConfigurator::positionChanged(const SpectrumData &spectrum)
 
         }
 
+
         spectrograph->spectrumChanged(spectrum);
     }
     else
     {
         disconnect(m_spectrographConnection);
     }
+    progressSlider->setValue( spectrum.position/1000.0 );
 }
 
 const QString &ChannelConfigurator::commPortName() const

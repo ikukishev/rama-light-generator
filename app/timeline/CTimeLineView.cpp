@@ -49,6 +49,19 @@ void CTimeLineView::mousePressEvent(QMouseEvent *event)
          {
              qDebug() << event->pos() << item << "channel:" << channel->label();
              QMenu menu(this);
+
+             if ( m_copyGenerator )
+             {
+                 QAction* pasteAct = new QAction( "Paste", this );
+                 menu.addAction( pasteAct );
+                 connect( pasteAct, &QAction::triggered, [ this, channel, pos = mapToScene(event->pos()) ]()
+                 {
+                    auto effect = new CTimeLineEffect( channel, m_copyGenerator->getCopy() );
+                    effect->setEffectStartPosition( convertSceneXToPosition( pos.x() ) );
+                 });
+             }
+
+
              for ( auto f : IEffectGeneratorFactory::getGeneratorFactories() )
              {
                  QAction* newAct = new QAction( f.first, this );
@@ -71,6 +84,16 @@ void CTimeLineView::mousePressEvent(QMouseEvent *event)
                track->setParentItem( nullptr );
                delete track;
             });
+
+
+            QAction* copyAct = new QAction( "Copy \"" + track->effectNameLabel() + "\" from " + track->getChannel()->label(), this );
+            menu.addAction( copyAct );
+            connect( copyAct, &QAction::triggered, [ this, track ]()
+            {
+               m_copyGenerator = track->getEffectGenerator();
+            });
+
+
             menu.exec( QCursor::pos() );
          }
       }

@@ -42,11 +42,14 @@ void FloatSliderWidget::setMinimum(double min)
 
 void FloatSliderWidget::setValue(double val)
 {
-   if ( val < minimum() ) val = minimum();
-   if ( val > maximum() ) val = maximum();
+    if ( !isSliderDragOn )
+    {
+        if ( val < minimum() ) val = minimum();
+        if ( val > maximum() ) val = maximum();
 
-   slider->setValue( (val - m_minimum) * (cSlideMaximumValue / (m_maximum - m_minimum) ) );
-   updateLabel();
+        slider->setValue( (val - m_minimum) * (cSlideMaximumValue / (m_maximum - m_minimum) ) );
+        updateLabel();
+    }
 }
 
 void FloatSliderWidget::adjust()
@@ -66,6 +69,16 @@ void FloatSliderWidget::adjust()
    connect( slider, &SliderEx::clicked, [ this ]( ) {
       emit clicked();
    } );
+
+   connect( slider, &SliderEx::sliderPressed, [ this ]( ) {
+      isSliderDragOn = true;
+   } );
+
+   connect( slider, &SliderEx::sliderReleased, [ this ]( ) {
+      isSliderDragOn = false;
+      emit sliderReleased( );
+   } );
+
    l->addWidget( slider );
 
    label = new LabelEx( this );
@@ -86,4 +99,9 @@ void FloatSliderWidget::mousePressEvent( QMouseEvent *event )
 {
    emit clicked();
    QWidget::mousePressEvent( event );
+}
+
+bool FloatSliderWidget::getIsSliderDragOn() const
+{
+    return isSliderDragOn;
 }

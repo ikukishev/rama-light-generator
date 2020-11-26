@@ -50,4 +50,9 @@ QWidget *CEffectIntensity::buildWidget(QWidget *parent)
     return configWidget;
 }
 
+std::shared_ptr<IEffectGenerator> CEffectIntensity::makeCopy() const
+{
+    return std::make_shared<CEffectIntensity>(*this);
+}
+
 DECLARE_EFFECT_FACTORY( Intensity, CEffectIntensity )

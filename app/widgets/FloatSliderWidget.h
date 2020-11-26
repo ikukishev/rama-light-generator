@@ -20,9 +20,12 @@ public:
    void setMinimum( double min );
    void setValue( double value );
 
+   bool getIsSliderDragOn() const;
+
 signals:
    void valueChanged(double value);
    void clicked();
+   void sliderReleased();
 
 
 private:
@@ -35,6 +38,7 @@ protected:
 private:
    SliderEx* slider = nullptr;
    LabelEx* label = nullptr;
+   bool isSliderDragOn = false;
 
    double m_minimum;
    double m_maximum;

@@ -175,5 +175,13 @@ QWidget *IEffectGenerator::configurationWidget( QWidget* parent )
 bool IEffectGenerator::isPositionActive( int64_t position )  const
 {
    return (position >= m_effectStartPosition)
-         && (position <= ( m_effectStartPosition + m_effectDuration ));
+           && (position <= ( m_effectStartPosition + m_effectDuration ));
+}
+
+std::shared_ptr<IEffectGenerator> IEffectGenerator::getCopy() const
+{
+    std::shared_ptr<IEffectGenerator> copy = makeCopy();
+    assert( nullptr != copy );
+    copy->m_uuid = QUuid::createUuid();
+    return copy;
 }

@@ -69,12 +69,14 @@ public:
    QWidget* configurationWidget( QWidget* parent );
 
    bool isPositionActive( int64_t position ) const;
+   std::shared_ptr<IEffectGenerator> getCopy() const;
 
 protected:
    virtual QJsonObject toJsonParameters() const = 0;
    virtual bool parseParameters( const QJsonObject& parameters ) = 0;
    virtual double calculateIntensity( const SpectrumData& spectrumData ) = 0;
    virtual QWidget* buildWidget( QWidget* parent ) = 0;
+   virtual std::shared_ptr<IEffectGenerator> makeCopy() const = 0;
 
 private:
    IEffectGeneratorFactory& m_factory;

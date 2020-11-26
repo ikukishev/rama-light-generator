@@ -74,4 +74,9 @@ QWidget *CEffectFade::buildWidget(QWidget *parent)
    return configWidget;
 }
 
+std::shared_ptr<IEffectGenerator> CEffectFade::makeCopy() const
+{
+    return std::make_shared<CEffectFade>(*this);
+}
+
 DECLARE_EFFECT_FACTORY( Fade, CEffectFade )

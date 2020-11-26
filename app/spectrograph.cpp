@@ -121,6 +121,8 @@ void Spectrograph::paintEvent(QPaintEvent *event)
             painter.fillRect(regionRect, QColorConstants::Magenta);
         }
 
+        qDebug() << "CTRL fade:"<<m_fading << "gain:" << m_gain << "spectrumIndex:" << m_barSelected << "Intensity:" << m_current_value ;
+
 
         painter.setBrush(Qt::NoBrush);
 

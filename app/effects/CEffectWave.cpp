@@ -90,4 +90,9 @@ QWidget *CEffectWave::buildWidget(QWidget *parent)
    return configWidget;
 }
 
+std::shared_ptr<IEffectGenerator> CEffectWave::makeCopy() const
+{
+    return std::make_shared<CEffectWave>(*this);
+}
+
 DECLARE_EFFECT_FACTORY( Wave, CEffectWave )

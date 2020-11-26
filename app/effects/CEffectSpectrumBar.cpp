@@ -176,5 +176,12 @@ QWidget *CEffectSpectrumBar::buildWidget(QWidget *parent)
    return configWidget;
 }
 
+std::shared_ptr<IEffectGenerator> CEffectSpectrumBar::makeCopy() const
+{
+    auto copy =std::make_shared<CEffectSpectrumBar>(*this);
+    copy->spectrograph = nullptr;
+    return copy;
+}
+
 
 DECLARE_EFFECT_FACTORY( SpectrumBar, CEffectSpectrumBar )

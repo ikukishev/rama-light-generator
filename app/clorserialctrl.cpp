@@ -139,6 +139,10 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                                currentSpectrum->spectrum[ spectrumIndex ] = value;
                            }
                        }
+                       if ( channel.unit == 2 && channel.channel == 8 )
+                       {
+                          qDebug() << "fade:" << fade << "gain:" << gain << "spectrumIndex:" << spectrumIndex << "Intensity:" << currentSpectrum->spectrum[ spectrumIndex ];
+                       }
                     }
                     else
                     {

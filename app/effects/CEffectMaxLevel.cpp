@@ -112,4 +112,9 @@ QWidget *CEffectMaxLevel::buildWidget(QWidget *parent)
    return configWidget;
 }
 
+std::shared_ptr<IEffectGenerator> CEffectMaxLevel::makeCopy() const
+{
+    return std::make_shared<CEffectMaxLevel>(*this);
+}
+
 DECLARE_EFFECT_FACTORY( MaxLevel, CEffectMaxLevel )

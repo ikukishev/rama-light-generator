@@ -17,6 +17,7 @@ class ChannelConfigurator;
 class CLightSequence;
 class Spectrograph;
 class SpectrumData;
+class FloatSliderWidget;
 
 class ChannelConfigurator : public QDialog
 {
@@ -62,6 +63,8 @@ private slots:
 private:
     Ui::ChannelConfigurator *ui;
     Spectrograph* spectrograph = nullptr;
+    FloatSliderWidget* progressSlider = nullptr;
+    QPushButton* playButton = nullptr;
     std::vector<Channel> m_channels;
     QString   m_commPortName;
     uint32_t  m_baudRate;
