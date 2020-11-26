@@ -35,6 +35,13 @@ void CEffectEditorWidget::setCurrentSequense(std::weak_ptr<CLightSequence> seque
       return;
    }
 
+   if ( currentSequense.lock() == sequensePtr )
+   {
+      return;
+   }
+
+
+
    m_spectrumConnections.clear();
 
    auto deleter = [](QMetaObject::Connection* con){ disconnect(*con); delete con; };
