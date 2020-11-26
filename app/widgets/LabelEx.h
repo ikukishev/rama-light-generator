@@ -17,6 +17,9 @@ public:
 signals:
     void clicked();
 
+public:
+    void emitClick();
+
 protected:
 
     virtual void mousePressEvent(QMouseEvent* event) override;
