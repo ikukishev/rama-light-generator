@@ -50,6 +50,8 @@ private slots:
 
     void on_actionStart_show_triggered(bool checked);
 
+    void on_actionRepeat_triggered(bool checked);
+
 private:
 
     void adjustSequense( std::shared_ptr<CLightSequence>& seq );
@@ -86,6 +88,7 @@ private:
     CEffectEditorWidget*           m_effectConfiguration;
 
     bool isShowStarted = false;
+    bool isRepeat = false;
 
 };
 

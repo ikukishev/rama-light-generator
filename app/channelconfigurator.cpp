@@ -13,6 +13,8 @@
 #include <QPushButton>
 #include "widgets/FloatSliderWidget.h"
 #include "constants.h"
+#include "clightsequence.h"
+#include "spectrograph.h"
 
 const std::string configuration("channelConfiguration.json");
 
@@ -58,6 +60,28 @@ ChannelConfigurator::ChannelConfigurator(QWidget *parent)
 
     header->setSectionResizeMode( cColumnIndexLabel, QHeaderView::Stretch);
     header->setSectionResizeMode( cColumnIndexUuid, QHeaderView::Stretch);
+    spectrograph = new Spectrograph( );
+    spectrograph->setMinimumHeight( 300 );
+    connect( spectrograph, &Spectrograph::selectedBarChanged, [this](int index)
+    {
+        if ( isDisplayed )
+        {
+            auto currentIndex = ui->tableWidget->currentRow();
+            if ( currentIndex >=0 && currentIndex < ui->tableWidget->rowCount() )
+            {
+                auto spectrumIndexWidget = ui->tableWidget->cellWidget( currentIndex, cColumnIndexSpectrumBarIndex );
+                if ( auto combo = dynamic_cast< QComboBox* >( spectrumIndexWidget ) )
+                {
+                    if ( index >= 0 )
+                    {
+                        combo->setCurrentIndex(index);
+                    }
+                }
+            }
+        }
+    } );
+
+    ui->verticalLayout_3->addWidget( spectrograph );
    load();
 }
 
@@ -81,7 +105,15 @@ QDialog::DialogCode ChannelConfigurator::display()
         ui->tableWidget->setCellWidget( 0, cColumnIndexFade, new FloatSliderWidget( cMaxFadeValue, cMinFadeValue, cDefaultFadeValue ) );
     }
     setEnableOkButton(isTableDataValid());
+
+    isDisplayed = true;
+    if ( auto ptr = m_sequense.lock() )
+    {
+        m_spectrographConnection = connect( ptr.get(), &CLightSequence::positionChanged,
+                                                this, &ChannelConfigurator::positionChanged );
+    }
     auto result = static_cast< QDialog::DialogCode >( exec() );
+    isDisplayed = false;
 
     return result;
 }
@@ -696,9 +728,65 @@ uint32_t ChannelConfigurator::baudRate() const
     return m_baudRate;
 }
 
+void ChannelConfigurator::sequensePlayStarted(std::weak_ptr<CLightSequence> sequense)
+{
+    m_sequense = std::move(sequense);
+
+    if ( auto ptr = m_sequense.lock() )
+    {
+        if ( isDisplayed )
+        {
+            m_spectrographConnection = connect( ptr.get(), &CLightSequence::positionChanged,
+                                                this, &ChannelConfigurator::positionChanged );
+        }
+    }
+    else
+    {
+        disconnect(m_spectrographConnection);
+    }
+}
+
+void ChannelConfigurator::positionChanged(const SpectrumData &spectrum)
+{
+    if ( isDisplayed )
+    {
+        auto currentIndex = ui->tableWidget->currentRow();
+        if ( currentIndex >=0 && currentIndex < ui->tableWidget->rowCount() )
+        {
+
+            auto spectrumIndexWidget = ui->tableWidget->cellWidget( currentIndex, cColumnIndexSpectrumBarIndex );
+            if ( auto combo = dynamic_cast< QComboBox* >( spectrumIndexWidget ) )
+            {
+                auto index = combo->currentIndex();
+                if ( index > 0 )
+                {
+                    spectrograph->setBarSelected(index);
+                }
+            }
+
+            auto gainWidget = ui->tableWidget->cellWidget( currentIndex, cColumnIndexGain );
+            if ( auto gain = dynamic_cast< FloatSliderWidget* >( gainWidget ) )
+            {
+                spectrograph->setGain(gain->value());
+            }
+
+            auto fadeWidget = ui->tableWidget->cellWidget( currentIndex, cColumnIndexFade );
+            if ( auto fade = dynamic_cast< FloatSliderWidget* >( fadeWidget ) )
+            {
+                spectrograph->setFading(fade->value());
+            }
+
+        }
+
+        spectrograph->spectrumChanged(spectrum);
+    }
+    else
+    {
+        disconnect(m_spectrographConnection);
+    }
+}
+
 const QString &ChannelConfigurator::commPortName() const
 {
     return m_commPortName;
 }
-
-

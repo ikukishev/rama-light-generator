@@ -45,7 +45,7 @@ MainWindow::MainWindow( QWidget *parent )
 
     m_spectrograph = new Spectrograph(  );
 
-    ui->horizontalLayout_3->addWidget(m_spectrograph);
+    ui->spectrographLayout->addWidget(m_spectrograph);
     m_spectrograph->show();
 
     load();
@@ -285,11 +285,7 @@ void MainWindow::sequenseMove(std::weak_ptr<CLightSequence> thisObject, EMoveDir
 
 void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
 {
-//    if ( m_current.lock() == thisObject.lock() )
-//    {
-//       return;
-//    }
-
+    auto currentIndex = ui->tableWidget_2->currentIndex();
     ui->tableWidget_2->clear();
     QStringList labels;
     labels << "Chnnel Name";
@@ -310,6 +306,7 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
     m_current = thisObject;
     m_effectConfiguration->setCurrentSequense( thisObject );
     m_lorCtrl->playStarted( thisObject );
+    m_channelConfigurator->sequensePlayStarted( thisObject );
 
     qDebug() << __FUNCTION__ << sequense->getFileName().c_str();
 
@@ -324,10 +321,7 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
         const auto& channel = m_channelConfigurator->channels()[i];
         auto channelConfiguration = sequense->getConfiguration( channel.uuid );
 
-        auto widgetPressed = [this, channelConfiguration,
-              defaultGain = channel.gain,
-              defaultSpectrumIndex = channel.spectrumIndex,
-              defaultFade = channel.fade]()
+        auto widgetPressed = [this, channelConfiguration, &channel]()
         {
             qDebug() << "widgetPressed " << channelConfiguration->channelUuid;
 
@@ -347,7 +341,7 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
             }
             else
             {
-                m_spectrograph->setBarSelected( defaultSpectrumIndex );
+                m_spectrograph->setBarSelected( channel.spectrumIndex );
             }
 
             if ( channelConfiguration->isGainSet() )
@@ -356,7 +350,7 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
             }
             else
             {
-                m_spectrograph->setGain( defaultGain );
+                m_spectrograph->setGain( channel.gain );
             }
 
             m_spectrograph->setMinimumLevel( channelConfiguration->minimumLevel );
@@ -367,8 +361,10 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
             }
             else
             {
-                m_spectrograph->setFading( defaultFade );
+                m_spectrograph->setFading( channel.fade );
             }
+
+            ui->spectrographGroupBox->setTitle( channel.label + ", unit: " + QString::number( channel.unit ) + ", channel: " + QString::number( channel.channel ) );
 
         };
 
@@ -408,13 +404,48 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
         ui->tableWidget_2->setCellWidget( i, 3, fading );
     }
 
+    if ( currentIndex.row() >=0 && currentIndex.row() < ui->tableWidget_2->rowCount() )
+    {
+        ui->tableWidget_2->selectRow( currentIndex.row() );
+        ui->tableWidget_2->scrollTo( currentIndex );
+        auto widget = ui->tableWidget_2->cellWidget( currentIndex.row(), 0 );
+        if ( nullptr != widget )
+        {
+            if ( auto label = dynamic_cast<LabelEx*>( widget ) )
+            {
+                label->emitClick();
+            }
+            else
+            {
+                qDebug() << " FAILED CAST ";
+            }
+        }
+        else
+        {
+            qDebug() << " FAILED GET WIDGET ";
+        }
+    }
+    else
+    {
+        qDebug() << " FAILED GET CURRENT ROW: " << currentIndex.row();
+    }
+
 }
 
 void MainWindow::playNext()
 {
    if ( !isShowStarted )
    {
-      return;
+       if ( isRepeat )
+       {
+           auto current = m_current.lock();
+           if ( nullptr != current )
+           {
+               current->getAudioFile()->setPosition( 0 );
+               current->getAudioFile()->play();
+           }
+       }
+       return;
    }
 
    auto current = m_current.lock();
@@ -614,4 +645,10 @@ void MainWindow::on_actionStart_show_triggered(bool checked)
    {
       isShowStarted = checked;
    }
+}
+
+
+void MainWindow::on_actionRepeat_triggered(bool checked)
+{
+    isRepeat = checked;
 }
