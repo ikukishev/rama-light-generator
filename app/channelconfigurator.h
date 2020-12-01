@@ -9,6 +9,8 @@
 #include <QComboBox>
 #include <vector>
 #include <CConfiguration.h>
+#include <QTime>
+#include <QTimer>
 
 namespace Ui {
 class ChannelConfigurator;
@@ -18,6 +20,13 @@ class CLightSequence;
 class Spectrograph;
 class SpectrumData;
 class FloatSliderWidget;
+
+enum class EShowState
+{
+    Disabled,
+    Idle,
+    Active
+};
 
 class ChannelConfigurator : public QDialog
 {
@@ -33,6 +42,19 @@ public:
     const QString& commPortName() const;
 
     uint32_t baudRate() const;
+
+    bool isSchedulerTimeActive() const;
+
+    bool getIsSchedulelEnabled() const
+    {
+        return isSchedulelEnabled;
+    }
+
+    EShowState getShowState() const;
+
+signals:
+
+    void showStateChanged( const EShowState& showState );
 
 public slots:
 
@@ -71,6 +93,13 @@ private:
     std::weak_ptr<CLightSequence> m_sequense;
     QMetaObject::Connection m_spectrographConnection;
     bool isDisplayed = false;
+    bool isSchedulelEnabled = false;
+    QTime showStartTime{16,00,00};
+    QTime showEndTime{22,00,00};
+    QTimer* showObserverTimer;
+
+    EShowState showState = EShowState::Disabled;
+
 };
 
 #endif // CHANNELCONFIGURATOR_H

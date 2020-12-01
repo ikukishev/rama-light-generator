@@ -23,7 +23,6 @@ const QString cKeyPlayRandom( "isRandomPlay" );
 const QString cKeySequenses( "sequenses" );
 
 
-
 MainWindow::MainWindow( QWidget *parent )
     : QMainWindow( parent )
     , ui( new Ui::MainWindow )
@@ -32,8 +31,10 @@ MainWindow::MainWindow( QWidget *parent )
     , m_spectrumConnection( nullptr )
     , m_current(  )
     , m_lorCtrl( new CLORSerialCtrl( this ) )
-    , m_effectConfiguration( new CEffectEditorWidget( ) )
+    , m_effectConfiguration( nullptr )
 {
+    std::srand(std::time(NULL));
+
     ui->setupUi(this);
     QHeaderView * header = ui->tableWidget->horizontalHeader();
     header->setSectionResizeMode(3, QHeaderView::Stretch);
@@ -51,40 +52,21 @@ MainWindow::MainWindow( QWidget *parent )
     load();
     m_lorCtrl->setPortParams( m_channelConfigurator->commPortName(), m_channelConfigurator->baudRate() );
 
-    QScreen * primaryScreen = QGuiApplication::primaryScreen();
-    QScreen * secondaryScreen = nullptr;
-    auto scList = QGuiApplication::screens();
-    if ( scList.size() > 1)
-    {
-       for ( auto screen : scList )
-       {
-          if ( screen != primaryScreen )
-          {
-             secondaryScreen = screen;
-             break;
-          }
-       }
-    }
-    else
-    {
-       secondaryScreen = primaryScreen;
-    }
-
-    move( primaryScreen->geometry().topLeft() );
+    move( QGuiApplication::primaryScreen()->geometry().topLeft() );
 
     setWindowState(Qt::WindowMaximized);
-    m_effectConfiguration->setWindowState( Qt::WindowMaximized );
-    m_effectConfiguration->move( secondaryScreen->geometry().topLeft() );
-    m_effectConfiguration->setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint );;
-    m_effectConfiguration->show();
 
-    std::srand(std::time(NULL));
-
+    connect( m_channelConfigurator, &ChannelConfigurator::showStateChanged, [this]( const EShowState& showState ){
+        startShowTriggered( EShowState::Active == showState );
+    } );
 }
 
 MainWindow::~MainWindow()
 {
-   delete m_effectConfiguration;
+    if ( nullptr != m_effectConfiguration)
+    {
+        delete m_effectConfiguration;
+    }
    delete ui;
 }
 
@@ -202,7 +184,7 @@ void MainWindow::load()
 
 void MainWindow::updateTable()
 {
-   ui->tableWidget->clear();
+    ui->tableWidget->clear();
     ui->tableWidget->setRowCount(m_sequences.size());
     for ( std::size_t i = 0; i < m_sequences.size(); ++i )
     {
@@ -304,7 +286,10 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
     }
 
     m_current = thisObject;
-    m_effectConfiguration->setCurrentSequense( thisObject );
+    if ( nullptr != m_effectConfiguration )
+    {
+        m_effectConfiguration->setCurrentSequense( thisObject );
+    }
     m_lorCtrl->playStarted( thisObject );
     m_channelConfigurator->sequensePlayStarted( thisObject );
 
@@ -532,7 +517,10 @@ void MainWindow::closeEvent(QCloseEvent *)
 {
    qDebug() << __FUNCTION__;
    persist();
-   m_effectConfiguration->close();
+   if ( nullptr != m_effectConfiguration )
+   {
+       m_effectConfiguration->close();
+   }
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -636,19 +624,53 @@ void MainWindow::on_actionRandom_triggered(bool checked)
 
 void MainWindow::on_actionStart_show_triggered(bool checked)
 {
-   if ( !isShowStarted )
-   {
-      isShowStarted = checked;
-      playNext();
-   }
-   else
-   {
-      isShowStarted = checked;
-   }
+    startShowTriggered( checked );
 }
 
 
 void MainWindow::on_actionRepeat_triggered(bool checked)
 {
     isRepeat = checked;
+}
+
+void MainWindow::on_actionEffect_editor_triggered(bool checked)
+{
+    if ( checked )
+    {
+        if ( nullptr == m_effectConfiguration )
+        {
+            m_effectConfiguration = new CEffectEditorWidget(  );
+            m_effectConfiguration->setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint );
+
+            m_effectConfiguration->move( QGuiApplication::primaryScreen()->geometry().topLeft() );
+
+            m_effectConfiguration->setWindowState( Qt::WindowMaximized );
+        }
+        if ( !m_current.expired() )
+        {
+            m_effectConfiguration->setCurrentSequense( m_current );
+        }
+        m_effectConfiguration->show();
+    }
+    else
+    {
+        if ( nullptr != m_effectConfiguration )
+        {
+            delete m_effectConfiguration;
+            m_effectConfiguration = nullptr;
+        }
+    }
+}
+
+void MainWindow::startShowTriggered(bool active)
+{
+    if ( !isShowStarted )
+    {
+       isShowStarted = active;
+       playNext();
+    }
+    else
+    {
+       isShowStarted = active;
+    }
 }

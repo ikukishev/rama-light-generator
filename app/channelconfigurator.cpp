@@ -31,6 +31,9 @@ const QString cKeyColor( "Color" );
 const QString cKeyUUID( "uuid" );
 const QString cKeyPortName( "commPortName" );
 const QString cKeyPortBaudRate( "commPortBaudRate" );
+const QString cKeyIsSchedulerEnabled( "schedulerEnabled" );
+const QString cKeySchedulerStartTime( "schedulerStartTime" );
+const QString cKeySchedulerEndTime( "schedulerEndTime" );
 
 const uint32_t cDefaultBaudRate( 115200 );
 
@@ -43,6 +46,9 @@ constexpr int cColumnIndexGain    = 5;
 constexpr int cColumnIndexFade = 6;
 constexpr int cColumnIndexColor = 7;
 constexpr int cColumnIndexUuid = 8;
+
+
+constexpr int cShowCheckerInterval = 15*1000; // 15 seconds
 
 
 
@@ -130,7 +136,33 @@ ChannelConfigurator::ChannelConfigurator(QWidget *parent)
     hlayout->addWidget( progressSlider );
 
     ui->verticalLayout_3->addWidget( widget );
-   load();
+    load();
+
+    showObserverTimer = new QTimer( this );
+    showObserverTimer->start(cShowCheckerInterval);
+    connect( showObserverTimer, &QTimer::timeout, [ this ](){
+        if ( getIsSchedulelEnabled() )
+        {
+            if ( isSchedulerTimeActive() )
+            {
+                if ( EShowState::Active != showState )
+                {
+                    showState = EShowState::Active;
+                    emit showStateChanged( showState );
+                }
+            }
+            else if ( EShowState::Idle != showState )
+            {
+                showState = EShowState::Idle;
+                emit showStateChanged( showState );
+            }
+        }
+        else if ( EShowState::Disabled != showState )
+        {
+            showState = EShowState::Disabled;
+            emit showStateChanged( showState );
+        }
+    } );
 }
 
 ChannelConfigurator::~ChannelConfigurator()
@@ -168,6 +200,7 @@ QDialog::DialogCode ChannelConfigurator::display()
             playButton->setIcon( playButton->style()->standardIcon(QStyle::SP_MediaPlay) );
         }
     }
+
     auto result = static_cast< QDialog::DialogCode >( exec() );
     isDisplayed = false;
 
@@ -354,6 +387,51 @@ void ChannelConfigurator::load()
         }
 
 
+        if ( json.contains( cKeyIsSchedulerEnabled ) )
+        {
+            if ( !json[ cKeyIsSchedulerEnabled ].isBool() )
+            {
+                qWarning() << "Channel '" << cKeyIsSchedulerEnabled << "' is wrong";
+            }
+            else
+            {
+                isSchedulelEnabled = json[ cKeyIsSchedulerEnabled ].toBool( false );
+            }
+        }
+
+        if ( json.contains( cKeySchedulerStartTime ) && json.contains( cKeySchedulerEndTime ) )
+        {
+
+            auto startTime = showStartTime;
+            if ( !json[ cKeySchedulerStartTime ].isString() )
+            {
+                qWarning() << "Channel '" << cKeySchedulerStartTime << "' is wrong";
+            }
+            else
+            {
+                auto startTimeString = json[ cKeySchedulerStartTime ].toString();
+                startTime = QTime::fromString(startTimeString, ui->schedulerStartTime->displayFormat());
+            }
+
+            auto endTime = showEndTime;
+            if ( !json[ cKeySchedulerEndTime ].isString() )
+            {
+                qWarning() << "Channel '" << cKeySchedulerEndTime  << "' is wrong";
+            }
+            else
+            {
+                auto endTimeString = json[ cKeySchedulerEndTime  ].toString();
+                endTime = QTime::fromString(endTimeString, ui->schedulerEndTime->displayFormat());
+            }
+
+            if ( startTime < endTime && endTime.isValid() && startTime.isValid() )
+            {
+                showEndTime = endTime;
+                showStartTime = startTime;
+            }
+
+        }
+
         if ( !isSchemaValid )
         {
             QMessageBox::warning( this, "Warning", QString("Invalid configuration file schema: ") + configuration.c_str() );
@@ -396,6 +474,9 @@ void ChannelConfigurator::persist()
     QJsonObject jsonObject;
     jsonObject[ cKeyPortName ] = m_commPortName;
     jsonObject[ cKeyPortBaudRate ] = static_cast<int>(m_baudRate);
+    jsonObject[ cKeyIsSchedulerEnabled ] = isSchedulelEnabled;
+    jsonObject[ cKeySchedulerStartTime ] = showStartTime.toString( ui->schedulerStartTime->displayFormat() );
+    jsonObject[ cKeySchedulerEndTime ] = showEndTime.toString( ui->schedulerEndTime->displayFormat() );
     jsonObject[ cKeyChannels ] = jsonChannelsArray;
 
     persistFile.write( QJsonDocument(jsonObject).toJson() );
@@ -448,6 +529,10 @@ void ChannelConfigurator::updateTableData()
 
     ui->commBaudrate->setText( QString::number( m_baudRate ) );
     ui->commPortNameEdit->setText( m_commPortName );
+    ui->schedulerStartTime->setTime ( showStartTime );
+    ui->schedulerEndTime->setTime   ( showEndTime );
+    ui->schedulerEnabled->setChecked( isSchedulelEnabled );
+
 }
 
 void ChannelConfigurator::updateChannelsValue()
@@ -563,6 +648,16 @@ void ChannelConfigurator::updateChannelsValue()
     if ( !isSucess )
     {
         m_baudRate = cDefaultBaudRate;
+    }
+
+    isSchedulelEnabled = ui->schedulerEnabled->isChecked();
+
+    auto startTime = ui->schedulerStartTime->time();
+    auto endTime = ui->schedulerEndTime->time();
+    if ( startTime < endTime )
+    {
+        showStartTime = startTime;
+        showEndTime = endTime;
     }
 
 }
@@ -779,9 +874,22 @@ void ChannelConfigurator::on_buttonBox_clicked(QAbstractButton *button)
     }
 }
 
+EShowState ChannelConfigurator::getShowState() const
+{
+    return showState;
+}
+
+
+
 uint32_t ChannelConfigurator::baudRate() const
 {
     return m_baudRate;
+}
+
+bool ChannelConfigurator::isSchedulerTimeActive() const
+{
+    QTime currentTime = QTime::currentTime();
+    return  showStartTime <= currentTime && currentTime < showEndTime;
 }
 
 void ChannelConfigurator::sequensePlayStarted(std::weak_ptr<CLightSequence> sequense)
@@ -844,6 +952,7 @@ void ChannelConfigurator::positionChanged(const SpectrumData &spectrum)
     }
     progressSlider->setValue( spectrum.position/1000.0 );
 }
+
 
 const QString &ChannelConfigurator::commPortName() const
 {

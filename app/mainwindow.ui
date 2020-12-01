@@ -180,7 +180,7 @@
      <x>0</x>
      <y>0</y>
      <width>1306</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -208,9 +208,16 @@
     <addaction name="actionRandom"/>
     <addaction name="actionRepeat"/>
    </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="actionEffect_editor"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPlay"/>
    <addaction name="menuSettings"/>
+   <addaction name="menuWindow"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
@@ -266,6 +273,14 @@
    </property>
    <property name="text">
     <string>Repeat</string>
+   </property>
+  </action>
+  <action name="actionEffect_editor">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Effect editor</string>
    </property>
   </action>
  </widget>

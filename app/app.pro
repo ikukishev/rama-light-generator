@@ -72,7 +72,7 @@ FORMS += \
 
 
 win32 {
-    LIBS += -L$$PWD/../3rdparty/bass24/x64
+    LIBS += -L$$PWD/../3rdparty/bass24/
     LIBS += -lbass
 } else {
     linux-g++*: {
