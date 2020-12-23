@@ -9,7 +9,7 @@ constexpr double cMinFadeValue = 0.0;
 constexpr double cDefaultFadeValue = 2.5;
 constexpr double cMaxThreshholdValue = 1.0;
 constexpr double cMinThreshholdValue = 0.0;
-constexpr double cDefaultThreshholdValue = 0.0;
+constexpr double cDefaultThreshholdValue = 0.1;
 constexpr double cMinIntensity = 0.0;
 constexpr double cMaxIntensity = 1.0;
 

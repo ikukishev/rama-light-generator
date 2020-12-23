@@ -5,6 +5,7 @@
 
 #include "qbassaudiofile.h"
 #include "CConfiguration.h"
+#include "constants.h"
 #include <memory>
 #include <list>
 #include <QSlider>
@@ -86,7 +87,7 @@ public:
       QUuid channelUuid;
       std::shared_ptr< uint32_t > spectrumIndex;
       std::shared_ptr< double > gain;
-      double minimumLevel = 0.0;
+      double minimumLevel = cDefaultThreshholdValue;
       std::shared_ptr< double > fade;
       std::map< QUuid, std::shared_ptr<IEffectGenerator> > effects;
    };

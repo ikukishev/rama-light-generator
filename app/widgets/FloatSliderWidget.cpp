@@ -90,7 +90,7 @@ void FloatSliderWidget::adjust()
 void FloatSliderWidget::updateLabel()
 {
    char buf[10] ={0};
-   snprintf(buf, 10, "%5.2f", value());
+   snprintf( buf, 10, "%5.2f", value() );
    label->setText( QString(buf) );
 }
 

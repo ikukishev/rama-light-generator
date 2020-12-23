@@ -5,6 +5,7 @@
 #include <algorithm>
 
 const uint8_t    cHearbeatData[] = { 0x00, 0xFF, 0x81, 0x56, 0x00 };
+constexpr auto   cChannelsPerUnit = 32;
 
 CLORSerialCtrl::CLORSerialCtrl( QObject *parent )
     : QObject( parent )
@@ -56,18 +57,14 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
 
         auto playPositionChanging = [ this
                 , currentSequense
-                , currentSpectrum = std::make_shared< SpectrumData >() ]
-                (const SpectrumData& spectrum)
+                , currentIntensity = std::map< int /*unit*32+channel*/, float /*CurrentIntensity*/>()
+                , currentPosition = uint64_t(0) ]
+                (const SpectrumData& spectrum) mutable
         {
             auto sequense = currentSequense.lock();
             if ( nullptr != sequense )
             {
-                if ( currentSpectrum->position > spectrum.position || currentSpectrum->spectrum.size() != spectrum.spectrum.size() )
-                {
-                    *currentSpectrum = spectrum;
-                }
-
-                auto dt = spectrum.position - currentSpectrum->position;
+                auto dt = spectrum.position - currentPosition;
 
                 auto& channels = sequense->getGlobalConfiguration().channels();
                 for ( auto& channel : channels )
@@ -114,7 +111,16 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                     double y = k * double(dt) + b;
                     double intensityReduction = b - y;
 
-                    currentSpectrum->spectrum[ spectrumIndex ] -= intensityReduction;
+                    int channelIndex = channel.unit * cChannelsPerUnit + channel.channel;
+                    auto currentChannelIntensityIt = currentIntensity.find(channelIndex);
+                    if ( currentChannelIntensityIt == currentIntensity.end() )
+                    {
+                        currentChannelIntensityIt = currentIntensity.insert( {channelIndex, 0.0f } ).first;
+                    }
+                    else if ((*currentChannelIntensityIt).second > 0.0f)
+                    {
+                        (*currentChannelIntensityIt).second -= intensityReduction;
+                    }
 
 
                     if ( !useEffectValue )
@@ -128,34 +134,34 @@ void CLORSerialCtrl::playStarted( std::weak_ptr<CLightSequence> currentSequense 
                        auto value = spectrum.spectrum[ spectrumIndex ] * gain;
 
 
-                       if ( value > currentSpectrum->spectrum[ spectrumIndex ] )
+                       if ( value > (*currentChannelIntensityIt).second )
                        {
                            if ( value > 1.0 )
                            {
-                               currentSpectrum->spectrum[ spectrumIndex ] = 1.0;
+                               (*currentChannelIntensityIt).second = 1.0;
                            }
                            else if ( value > localConfiguration->minimumLevel )
                            {
-                               currentSpectrum->spectrum[ spectrumIndex ] = value;
+                               (*currentChannelIntensityIt).second = value;
                            }
                        }
-                       if ( channel.unit == 2 && channel.channel == 8 )
+//                     if ( channel.unit == 2 && channel.channel == 8 )
                        {
-                          qDebug() << "fade:" << fade << "gain:" << gain << "spectrumIndex:" << spectrumIndex << "Intensity:" << currentSpectrum->spectrum[ spectrumIndex ];
+                          qDebug() << "unit:" << channel.unit << "voltage:" << channel.voltage << "channel:" << channel.channel << "fade:" << fade << "gain:" << gain << "spectrumIndex:" << spectrumIndex << "Intensity:" << (*currentChannelIntensityIt).second;
                        }
                     }
                     else
                     {
-                       currentSpectrum->spectrum[ spectrumIndex ] = maxEffectValue;
+                       (*currentChannelIntensityIt).second = maxEffectValue;
                     }
 
                     //qDebug() << channel.label << "reduction:" << intensityReduction << "Intensity:" << currentSpectrum->spectrum[ spectrumIndex ];
 
-                    setIntensity( channel, currentSpectrum->spectrum[ spectrumIndex ] );
+                    setIntensity( channel, (*currentChannelIntensityIt).second );
 
                 }
 
-                currentSpectrum->position = spectrum.position;
+                currentPosition = spectrum.position;
             }
         };
 
@@ -193,8 +199,8 @@ void CLORSerialCtrl::setIntensity( const Channel& channel, double intensity )
     {
         uint8_t inten = 0xf0;
 
+        intensity *= double(channel.voltage) / 220.0;
         intensity = 1.0 - intensity;
-
         intensity *= 100.0;
 
         if ( intensity > 100.0 )
@@ -206,7 +212,7 @@ void CLORSerialCtrl::setIntensity( const Channel& channel, double intensity )
             intensity = 0.0;
         }
 
-        intensity *= double(channel.voltage) / 220.0;
+        //qDebug() << "unit:" << channel.unit << "voltage:" << channel.voltage << "channel:" << channel.channel << "intensity:"<< intensity;
 
         if ( intensity > 99.0)
         {
@@ -227,8 +233,6 @@ void CLORSerialCtrl::setIntensity( const Channel& channel, double intensity )
         uint8_t channelByte = 0x80 | (0x0F & (channel.channel-1));
         auto unit = static_cast<uint8_t>(channel.unit);
 
-        //qDebug() << "unit:" << channel.unit << "channel:" << channel.channel << "intensity:"<< intensity << "channelByte:" << channelByte;
-
         uint8_t  intensityData[6];
         intensityData[0] = 0x00;
         intensityData[1] = unit;
@@ -238,6 +242,5 @@ void CLORSerialCtrl::setIntensity( const Channel& channel, double intensity )
         intensityData[5] = 0x00;
 
         m_serial.write( reinterpret_cast<const char*>(intensityData), sizeof ( intensityData ) );
-
     }
 }

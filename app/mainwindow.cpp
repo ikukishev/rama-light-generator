@@ -306,7 +306,16 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
         const auto& channel = m_channelConfigurator->channels()[i];
         auto channelConfiguration = sequense->getConfiguration( channel.uuid );
 
-        auto widgetPressed = [this, channelConfiguration, &channel]()
+        auto labelStr = channel.label;
+        if ( channelConfiguration->isGainSet()
+             || channelConfiguration->isFadeSet()
+             || channelConfiguration->isSpectrumIndexSet() )
+        {
+            labelStr = "* " + labelStr;
+        }
+        auto label = new LabelEx(labelStr);
+
+        auto widgetPressed = [this, channelConfiguration, &channel, label]()
         {
             qDebug() << "widgetPressed " << channelConfiguration->channelUuid;
 
@@ -351,28 +360,48 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
 
             ui->spectrographGroupBox->setTitle( channel.label + ", unit: " + QString::number( channel.unit ) + ", channel: " + QString::number( channel.channel ) );
 
+            auto labelStr = channel.label;
+            if ( channelConfiguration->isGainSet()
+                 || channelConfiguration->isFadeSet()
+                 || channelConfiguration->isSpectrumIndexSet() )
+            {
+                labelStr = "* " + labelStr;
+            }
+            qDebug() << "!!!!!!:" << labelStr << channelConfiguration->isGainSet() << channelConfiguration->isFadeSet();
+            label->setText( labelStr );
+            label->update();
         };
 
-        auto label = new LabelEx( channel.label );
         connect( label, &LabelEx::clicked, widgetPressed );
+        ui->tableWidget_2->setCellWidget( i, 0,  label );
 
-        ui->tableWidget_2->setCellWidget( i, 0, label );
 
-
+        auto resetGainTriggered = std::make_shared<bool>(false);
+        auto resetFadeTriggered = std::make_shared<bool>(false);
         auto gainSlider = new FloatSliderWidget( cMaxGainValue, cMinGainValue,
                                                  channelConfiguration->isGainSet() ? (*channelConfiguration->gain) : channel.gain );
-        connect(gainSlider, &FloatSliderWidget::valueChanged, [channelConfiguration, this]( double value ){
-            channelConfiguration->setGain( value );
+        connect(gainSlider, &FloatSliderWidget::valueChanged, [resetGainTriggered, channelConfiguration, widgetPressed, this]( double value ){
+            if ( ! (*resetGainTriggered) )
+            {
+                channelConfiguration->setGain( value );
+            }
+            else
+            {
+                *resetGainTriggered = false;
+            }
             m_spectrograph->setGain( value );
+            qDebug() << "blb blb blblb";
+            widgetPressed();
         });
         connect(gainSlider, &FloatSliderWidget::clicked, widgetPressed );
         ui->tableWidget_2->setCellWidget( i, 1, gainSlider );
 
 
         auto threshHold = new FloatSliderWidget( cMaxThreshholdValue, cMinThreshholdValue, channelConfiguration->minimumLevel );
-        connect( threshHold, &FloatSliderWidget::valueChanged, [channelConfiguration, this]( double value ){
+        connect( threshHold, &FloatSliderWidget::valueChanged, [channelConfiguration, widgetPressed, this]( double value ){
             channelConfiguration->minimumLevel =  value;
             m_spectrograph->setMinimumLevel( channelConfiguration->minimumLevel );
+            widgetPressed();
         });
         connect( threshHold, &FloatSliderWidget::clicked, widgetPressed );
         ui->tableWidget_2->setCellWidget( i, 2, threshHold );
@@ -380,11 +409,39 @@ void MainWindow::sequensePlayStarted(std::weak_ptr<CLightSequence> thisObject)
 
         auto fading = new FloatSliderWidget( cMaxFadeValue, cMinFadeValue,
                                              channelConfiguration->isFadeSet() ? (*channelConfiguration->fade) : channel.fade );
-        connect(fading, &FloatSliderWidget::valueChanged, [channelConfiguration, this]( int value ){
-            channelConfiguration->setFade( value );
+        connect(fading, &FloatSliderWidget::valueChanged, [ resetFadeTriggered, channelConfiguration, widgetPressed, this]( int value ){
+            if ( ! (*resetFadeTriggered) )
+            {
+                channelConfiguration->setFade( value );
+            }
+            else
+            {
+                *resetFadeTriggered = false;
+            }
             m_spectrograph->setFading( value );
+            widgetPressed();
         });
         connect(fading, &FloatSliderWidget::clicked, widgetPressed );
+
+
+        label->setContextMenuPolicy( Qt::CustomContextMenu );
+        connect( label, &LabelEx::customContextMenuRequested, [=, &channel ]( const QPoint &pos ){
+            QAction* reset = new QAction(tr("Reset to default configuration"));
+            connect(reset, &QAction::triggered, [=, &channel](bool)
+            {
+                channelConfiguration->gain = nullptr;
+                channelConfiguration->fade = nullptr;
+                channelConfiguration->spectrumIndex = nullptr;
+                *resetGainTriggered = true;
+                *resetFadeTriggered = true;
+                fading->setValue(channel.fade);
+                gainSlider->setValue(channel.gain);
+                threshHold->setValue( cDefaultThreshholdValue );
+            });
+            QMenu menu;
+            menu.addAction(reset);
+            menu.exec( QCursor::pos() );
+        } );
 
         ui->tableWidget_2->setCellWidget( i, 3, fading );
     }
